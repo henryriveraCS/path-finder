@@ -1,0 +1,8 @@
+LISTED BELOW ARE THE REFERENCES I USED FOR DIFFERENT PATHFINDING ALGORITHMS:
+
+
+MANHATTAN-BASED A* ALGO (astar.py):
+	https://en.wikipedia.org/wiki/A*_search_algorithm
+	http://theory.stanford.edu/~amitp/GameProgramming/AStarComparison.html
+	http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html
+	https://gist.github.com/jamiees2/5531924
