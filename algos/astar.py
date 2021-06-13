@@ -28,10 +28,13 @@ def manhattan(current_node, goal_node):
 
 
 #use this to determine the neighbors of the current node
-def neighbors(current_node, matrix):
+def neighbors(current_node, matrix, DIRECTION):
 	x, y = current_node.point
-	#dynamically get the neighbors x, y around in a 4 way direction (left, down, up, right)
-	neighbor_list = [[x-1, y], [x, y - 1], [x, y + 1], [x+1, y] ]
+	if DIRECTION == 4:
+		#dynamically get the neighbors x, y around in a 4 way direction (left, down, up, right)
+		neighbor_list = [[x-1, y], [x, y - 1], [x, y + 1], [x+1, y] ]
+	else:
+		neighbor_list = [[x+1, y+1], [x+1, y-1], [x-1, y+1], [x-1, y-1], [x-1, y], [x, y - 1], [x, y + 1], [x+1, y] ]
 	#combine it into 1 variable so you can return a list of all neighbors nodes	
 	node_list = []	
 	for neighbor in neighbor_list:
@@ -48,7 +51,7 @@ def neighbors(current_node, matrix):
 		return []
 
 
-def astar(start_node, end_node, matrix):
+def astar(start_node, end_node, matrix, DIRECTION):
 	open_set = [start_node]
 	closed_set = []
 	current_node = start_node
@@ -67,7 +70,7 @@ def astar(start_node, end_node, matrix):
 		open_set.remove(current_node)
 		closed_set.append(current_node)
 		#loop through the current nodes neighbors iteratively in order to determine the best path
-		for node in neighbors(current_node, matrix):
+		for node in neighbors(current_node, matrix, DIRECTION):
 			#skip if already in our closed_set
 			if node in closed_set:
 				continue
@@ -89,11 +92,13 @@ def astar(start_node, end_node, matrix):
 				node.parent = current_node
 				#add it to the set afterwards
 				open_set.append(node)
-	
+
+
 #script starts here
 start_point = [6, 7]
 end_point= [1, 1]
-
+#direction determines if you want the movement to be 4 directional or 8 directional
+DIRECTION = 4 #change to 8 for multi-directional 
 #populate the matrix with node instances
 x_range = range(1, 10)
 y_range = range(1, 10)
@@ -113,8 +118,8 @@ print("START NODE: ", start_node, start_node.point)
 print("GOAL NODE: ", end_node, end_node.point)
 
 #list of nodes that point the algo determined is the best way to get there
-closed_set = astar(start_node, end_node, matrix)
-print("POINT FOUND: ")
+closed_set = astar(start_node, end_node, matrix, DIRECTION)
+print("END POINT vIA: ")
 for i in closed_set:
 	if i.parent:
 		print(i, i.point, i.point)
