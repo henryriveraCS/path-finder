@@ -1,8 +1,17 @@
 LISTED BELOW ARE THE REFERENCES I USED FOR DIFFERENT PATHFINDING ALGORITHMS:
 
-
 MANHATTAN-BASED A* ALGO (astar.py):
 	https://en.wikipedia.org/wiki/A*_search_algorithm
 	http://theory.stanford.edu/~amitp/GameProgramming/AStarComparison.html
 	http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html
 	https://gist.github.com/jamiees2/5531924
+
+
+DIJKSTRA'S ALGORITHM:
+	https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
+	https://stackoverflow.com/questions/6085467/python-min-function-with-a-list-of-objects
+
+
+PYQT5: 
+	https://www.mfitzp.com/tutorials/pyqt-signals-slots-events/
+	https://stackoverflow.com/questions/59521183/draw-a-correct-grid-with-pyqt5
