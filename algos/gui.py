@@ -16,10 +16,8 @@ import math
 from operator import attrgetter
 
 class dijkstraNode(QWidget):
-	def __init__(self, parent, point, nodeCount, posX, posY, height, width):
+	def __init__(self, parent, point, posX, posY, height, width):
 		super(dijkstraNode, self).__init__(parent)
-		#nodeCount is used to determine how many nodes are in the total matrix -> so we can properly draw the size of nodes
-		self.nodeCount = int(nodeCount)
 		self.point = point
 		self.cost = 1 
 		self.parent = None
@@ -27,7 +25,6 @@ class dijkstraNode(QWidget):
 		#node parent is used to prevent weird bugs with managing windows since it also uses "parent" as a parameter
 		self.nodeParent = None
 		self.wall = False
-
 
 		#QT metadata for node
 		#this is used by Grid to determine WHERE to place the node object
@@ -47,18 +44,12 @@ class dijkstraNode(QWidget):
 		self.isVisisted = False
 		self.isPath = False
 		self.nodeStatus = QLabel()
-		#mouse tracking capabilities
-		#self.setMouseTracking(True)
-		#self.mousePosLabel = QLabel(self)
-		#self.mousePosLabel.resize(200, 40)
 		self.height = height
 		self.width = width
 		self.posX = posX
 		self.posY = posY
 		self.nodeStatus.setText("Not Set")
 		
-		#make the node clickable
-		#self.mousePressEvent(QMouseEvent.MouseButtonPress)
 		#initalize UI features
 		self.initUI()
 	
@@ -175,8 +166,8 @@ class Grid(QWidget):
 		self.setLayout(self.windowLayout)
 		self.windowLayout.addWidget(self.HGroupBox)
 		#initialize UI (Qt won't load paintEvent without minimum size being set)
-		self.height = 900
-		self.width = 900
+		self.height = 800
+		self.width = 800
 		self.setMinimumSize(QSize(self.width, self.height))
 
 		self.initUI()
@@ -187,16 +178,14 @@ class Grid(QWidget):
 		posX, posY = 0, 0
 		for x in self.x_range:
 			for y in self.y_range:
-				dNode = dijkstraNode(parent=self, point=(x,y), nodeCount=self.nodeCount, posX=posX, posY=posY, height=nodeHeight, width=nodeWidth)
+				dNode = dijkstraNode(parent=self, point=(x,y), posX=posX, posY=posY, height=nodeHeight, width=nodeWidth)
 				self.createGridLayout(dNode, x, y)
 				#use the nodes own values to draw each instance next to next	
 				self.nodeMatrix.append(dNode)
-		
-
-		#draw the grid
 
 		self.update()
 	
+	#add a node widget with this function at position X,Y
 	def createGridLayout(self, dNode, x, y):
 		self.gridLayout.addWidget(dNode, x, y)
 
@@ -223,6 +212,7 @@ class Grid(QWidget):
 			print(node.point)
 		return nodeList
 
+	"""
 	def paintEvent(self, parent):
 		#create a grid -> populate this grid with nodes
 		qp = QPainter()
@@ -232,6 +222,7 @@ class Grid(QWidget):
 		qp.drawRect(0, 0, self.height, self.width)
 		qp.end()
 		#print("GRID PAINT EVENT RAN")
+	"""
 
 class MainWindow(QMainWindow):
 	def __init__(self):
@@ -335,11 +326,11 @@ class MainWindow(QMainWindow):
 	
 		#layout logic
 		outerLayout = QHBoxLayout()
-		hLayout = QHBoxLayout()
+		self.hLayout = QHBoxLayout()
 		vLayout = QVBoxLayout()
 		#draw grid and add it to first H layer
-		hLayout.addWidget(self.Grid)
-		hLayout.addStretch()
+		self.hLayout.addWidget(self.Grid)
+		self.hLayout.addStretch()
 		#draw forms/buttons and add it to V layer
 		vLayout.addWidget(self.rowsLabel)
 		vLayout.addWidget(self.rowsComboBox)
@@ -362,7 +353,7 @@ class MainWindow(QMainWindow):
 		QPushButton.setStyleSheet(self, open("forms.css").read())
 			
 		#add the V layer into the H layer
-		outerLayout.addLayout(hLayout)
+		outerLayout.addLayout(self.hLayout)
 		outerLayout.addLayout(vLayout)
 
 		container = QWidget()
@@ -378,7 +369,10 @@ class MainWindow(QMainWindow):
 		print("NEW ROWS: ", newRows, "NEW COLS: ", newCols)
 		self.x_range, self.y_range = range(newRows), range(newCols)
 		#re-intialize grid with new x_range + new y_range for new rows/cols
+		self.hLayout.removeWidget(self.Grid)
 		self.Grid = Grid(self, self.x_range, self.y_range, self.matrix, self.nodeCount)
+		#update the grid so it redraws itself
+		self.hLayout.addWidget(self.Grid)
 
 	
 	def dSearchClicked(self, checked):
@@ -393,13 +387,13 @@ class MainWindow(QMainWindow):
 		#iterate through the nodeList in order to find the start node, end node and wall nodes
 		for node in nodeList:
 			if node.isStart == True:
-				print("START NODE SELECTED: ", node.point)
+				#print("START NODE SELECTED: ", node.point)
 				startNode = node
 			if node.isEnd == True:
-				print("END NODE SELECTED: ", node.point)
+				#print("END NODE SELECTED: ", node.point)
 				endNode = node
 			if node.isWall == True:
-				print("WALL NODE SELECTED: ", node.point)
+				#print("WALL NODE SELECTED: ", node.point)
 				wallNodes.append(node)
 		
 		#now that we have the list of nodes and their associated values -> start the dijkstra node
@@ -430,6 +424,7 @@ class MainWindow(QMainWindow):
 			
 		return nodeList
 	
+	#dijkstra algorithm for GUI
 	def dijkstraAlgorithm(self, startNode, endNode, matrix, DIRECTION):
 		vSet = [] #visited nodes
 		uSet = matrix #unvisted nodes
@@ -437,13 +432,12 @@ class MainWindow(QMainWindow):
 		#first iteration will be starting node with a distance of 0
 		startNode.distance = 0
 		currentNode = startNode
-		#explore count is used to keep an infinite loop from happening
 		uSet.remove(currentNode)
 		while currentNode != endNode:
 			neighborNodes = self.neighbors(currentNode, matrix, DIRECTION)
-			for i in neighborNodes:
-				print("NEIGHBOR NODES: ", i.point, DIRECTION)
+			#mark every neighbor as visited
 			for node in neighborNodes:
+				node.isVisited = True
 				tentativeCost = currentNode.distance + node.move_cost()
 				if node in vSet or node.isWall == True:
 					continue
@@ -457,9 +451,8 @@ class MainWindow(QMainWindow):
 			vSet.append(currentNode)
 			lowestCostNode = min(uSet, key=attrgetter("distance"))
 			currentNode = lowestCostNode
-			print("LOWEST COST NODE: ", currentNode.point)
+			#print("LOWEST COST NODE: ", currentNode.point)
 			uSet.remove(currentNode)
-
 			
 		#now that algo finished -> go through the node parents of the end node to find the path
 		count = 0
@@ -467,13 +460,17 @@ class MainWindow(QMainWindow):
 			print("path to final node: ", currentNode, currentNode.point)
 			#update the color of the node to represent the walked path
 			currentNode.isPath = True
-			time.sleep(1)
+			#time.sleep(1)
 			self.listWidget.insertItem(count, str(currentNode.point))
 			currentNode = currentNode.parent
 			count += 1
 
 	def aSearchClicked(self, checked):
 		print("Beginning A* search...", checked)
+	
+	#astar algorithm for GUI
+	def astarAlgorithm(self, startNode, endNode, matrix, DIRECTION):
+		pass
 
 	"""
 	def contextMenuEvent(self, e):
