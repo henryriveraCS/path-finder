@@ -38,7 +38,7 @@ class dijkstraNode(QWidget):
 		self.wallColor = QColor(87, 133, 222)
 		self.startColor = QColor(31, 222, 116)
 		self.pathColor = QColor(241, 204, 102)
-		self.visistedColor = QColor(0, 50, 20)
+		self.visistedColor = QColor(255, 0, 102)
 		self.endColor = QColor(222, 31, 37)
 		self.isWall = False
 		self.isStart = False
@@ -83,7 +83,7 @@ class dijkstraNode(QWidget):
 			qp.setBrush(brush)
 
 		qp.drawRect(0, 0, self.width, self.height)
-		qp.drawText(QPoint(50, 50), str(self.point))
+		qp.drawText(QPoint(5, 15), str(self.point))
 		qp.end()
 	
 	#making the node widget clickable
@@ -237,8 +237,8 @@ class MainWindow(QMainWindow):
 		#self.setMaximumSize(QSize(1200, 900))
 		
 		#data for grid:
-		self.x_range = range(5)
-		self.y_range = range(5)
+		self.x_range = range(11)
+		self.y_range = range(11)
 		self.nodeCount = 0
 		self.matrix = []
 		for x in self.x_range:
@@ -280,6 +280,10 @@ class MainWindow(QMainWindow):
 		self.nodePosition.setText("No node selected")
 		self.nodePosition.setAlignment(Qt.AlignCenter)
 
+		self.speedLabel = QLabel()
+		self.speedLabel.setText("SPEED (default is 0.1 second per node)")
+		self.speedLabel.setAlignment(Qt.AlignCenter)
+
 		#comboBox logic
 		self.rowsComboBox = QComboBox()
 		rCount = 1
@@ -299,6 +303,12 @@ class MainWindow(QMainWindow):
 			cCount += 1
 		#set default
 		self.columnsComboBox.setCurrentIndex(4)
+
+		self.speedComboBox = QComboBox()
+		tCount = 0
+		while tCount < 1:
+			self.speedComboBox.addItem(str(tCount))
+			tCount += 0.1
 
 		#form logic (node info such as position, cost, distance, etc)
 		nodeFormLayout = QFormLayout()
@@ -353,6 +363,8 @@ class MainWindow(QMainWindow):
 		self.vLayout.addWidget(self.directionComboBox)
 		self.vLayout.addWidget(self.startPoint)
 		self.vLayout.addWidget(self.endPoint)
+		self.vLayout.addWidget(self.speedLabel)
+		self.vLayout.addWidget(self.speedComboBox)
 		self.vLayout.addWidget(self.dButton)
 		self.vLayout.addWidget(self.aButton)
 		self.vLayout.addWidget(self.listLabel)
@@ -401,19 +413,20 @@ class MainWindow(QMainWindow):
 	#run when dijkstra search is clicked
 	def dSearchClicked(self, checked):
 		print("Beginning Dijkstra search...", checked)
-		startNode, endNode, matrix, DIRECTION = self.getAlgoInfo()
+		startNode, endNode, matrix, DIRECTION, SPEED = self.getAlgoInfo()
 		#make sure a start/end node are selected before continuing
 		if startNode != None and endNode != None:
 			#update the label of start node + end node
 			self.startPoint.setText("START NODE: " + str(startNode.point))
 			self.endPoint.setText("END NODE: " + str(endNode.point))
-			self.dijkstraAlgorithm(startNode, endNode, matrix, DIRECTION)
+			self.dijkstraAlgorithm(startNode, endNode, matrix, DIRECTION, SPEED)
 		else:
 			print("Please select a start/end node!", startNode, endNode)
 	
 	#used by both algo's to determine the neighbors
 	def neighbors(self, currentNode, matrix, DIRECTION):
 		x,y = currentNode.point
+		#make sure it's an int
 		DIRECTION = int(DIRECTION)
 
 		if DIRECTION == 4:
@@ -430,7 +443,7 @@ class MainWindow(QMainWindow):
 		return nodeList
 	
 	#dijkstra algorithm for GUI
-	def dijkstraAlgorithm(self, startNode, endNode, matrix, DIRECTION):
+	def dijkstraAlgorithm(self, startNode, endNode, matrix, DIRECTION, SPEED):
 		vSet = [] #visited nodes
 		uSet = matrix #unvisted nodes
 
@@ -442,7 +455,9 @@ class MainWindow(QMainWindow):
 			neighborNodes = self.neighbors(currentNode, matrix, DIRECTION)
 			#mark every neighbor as visited
 			for node in neighborNodes:
-				#node.isVisited = True
+				node.isVisisted = True
+				time.sleep(0.2)
+				node.repaint()
 				tentativeCost = currentNode.distance + node.move_cost()
 				if node in vSet or node.isWall == True:
 					continue
@@ -461,13 +476,24 @@ class MainWindow(QMainWindow):
 			
 		#now that algo finished -> go through the node parents of the end node to find the path
 		count = 0
+		#we have to create a list (from start to end) to properly draw everything
+		fixedList = []
 		while currentNode.parent:
+			fixedList.append(currentNode)
+			currentNode = currentNode.parent
+
+		for currentNode in fixedList[::-1]:
+			currentNode.isVisisted = False
+			currentNode.repaint()
+			currentNode.isPath = True
+			#call the repaint function to color in the node
+			currentNode.repaint()
+			#time.sleep the length the user chose
+			time.sleep(SPEED)
 			print("path to final node: ", currentNode, currentNode.point)
 			#update the color of the node to represent the walked path
-			currentNode.isPath = True
-			#time.sleep(1)
 			self.listWidget.insertItem(count, str(currentNode.point))
-			currentNode = currentNode.parent
+			#currentNode = currentNode.parent
 			count += 1
 	
 	#this function is called by both algos in order to get the necessary data (start, end, matrix, direction)
@@ -488,9 +514,10 @@ class MainWindow(QMainWindow):
 			if node.isWall == True:
 				wallNodes.append(node)
 
-		DIRECTION = self.directionComboBox.currentText()
+		DIRECTION = int(self.directionComboBox.currentText())
+		SPEED = float(self.speedComboBox.currentText())
 
-		return startNode, endNode, matrix, DIRECTION
+		return startNode, endNode, matrix, DIRECTION, SPEED
 		
 
 	#used by astar algo to determine manhattan distance to end node
@@ -506,28 +533,34 @@ class MainWindow(QMainWindow):
 	#run when astar button is clicked
 	def aSearchClicked(self, checked):
 		print("Beginning A* search...", checked)
-		startNode, endNode, matrix, DIRECTION = self.getAlgoInfo()
+		startNode, endNode, matrix, DIRECTION, SPEED = self.getAlgoInfo()
 		#make sure a start/end node are selected before continuing
 		if startNode != None and endNode != None:
 			#update the label of start node + end node
 			self.startPoint.setText("START NODE: " + str(startNode.point))
 			self.endPoint.setText("END NODE: " + str(endNode.point))
 			#astar returns a final path
-			closedSet = self.astarAlgorithm(startNode, endNode, matrix, DIRECTION)
+			closedSet = self.astarAlgorithm(startNode, endNode, matrix, DIRECTION, SPEED)
 			count = 0
 			for node in closedSet[::-1]:
 				self.listWidget.insertItem(count, str(node.point))
+				node.isVisisted = False
+				node.isPath = True
+				node.repaint()
 				count += 1
 		else:
 			print("Please select a start/end node!", startNode, endNode)
 	
 	#astar algorithm for GUI
-	def astarAlgorithm(self, startNode, endNode, matrix, DIRECTION):
+	def astarAlgorithm(self, startNode, endNode, matrix, DIRECTION, SPEED):
 		openSet = [startNode]
 		closedSet = []
 		while openSet:
 			currentNode = min(openSet, key=lambda f: f.G + f.H)
 			currentNode.isPath = True
+			currentNode.isVisisted = True
+			currentNode.repaint()
+			time.sleep(SPEED)
 			if currentNode == endNode:
 				finalPath = []
 				while currentNode.parent:
@@ -540,11 +573,12 @@ class MainWindow(QMainWindow):
 			openSet.remove(currentNode)
 			closedSet.append(currentNode)
 			for node in self.neighbors(currentNode, matrix, DIRECTION):
-				#node.isVisited = True
+				node.isVisited = True
+				node.repaint()
+				#node.isPath = True
 				#if the node is in the closet set/is a wall, continue
 				if node in closedSet or node.isWall == True:
 					continue
-				
 				if node in openSet:
 					newG = currentNode.G + currentNode.move_cost()
 					if node.G > newG:
