@@ -20,6 +20,8 @@ class dijkstraNode(QWidget):
 		super(dijkstraNode, self).__init__(parent)
 		self.point = point
 		self.cost = 1 
+		self.G = 0
+		self.H = 0
 		self.parent = None
 		self.distance = float(math.inf)
 		#node parent is used to prevent weird bugs with managing windows since it also uses "parent" as a parameter
@@ -281,7 +283,7 @@ class MainWindow(QMainWindow):
 		#comboBox logic
 		self.rowsComboBox = QComboBox()
 		rCount = 1
-		rows = 10
+		rows = 25
 		while rCount < rows:
 			self.rowsComboBox.addItem(str(rCount)) 
 			rCount += 1
@@ -291,7 +293,7 @@ class MainWindow(QMainWindow):
 
 		self.columnsComboBox = QComboBox()
 		cCount = 1
-		columns = 10
+		columns = 25
 		while cCount < columns:
 			self.columnsComboBox.addItem(str(cCount))
 			cCount += 1
@@ -318,43 +320,51 @@ class MainWindow(QMainWindow):
 		self.aButton.clicked.connect(self.aSearchClicked)
 		self.dButton.clicked.connect(self.dSearchClicked)
 
+		self.refreshGridButton = QPushButton("REFRESH GRID")
+		self.refreshGridButton.clicked.connect(self.refreshGrid)
+
+		self.refreshPathButton = QPushButton("REFRESH PATH LIST")
+		self.refreshPathButton.clicked.connect(self.refreshPath)
+
 		#logic for path list
 		self.listWidget = QListWidget()
 		self.listLabel = QLabel()
-		self.listLabel.setText("PATH TRAVERSED(start to end)")
+		self.listLabel.setText("PATH TRAVERSED(end to start)")
 		self.listLabel.setAlignment(Qt.AlignCenter)
 	
 		#layout logic
 		outerLayout = QHBoxLayout()
 		self.hLayout = QHBoxLayout()
-		vLayout = QVBoxLayout()
+		self.vLayout = QVBoxLayout()
 		#draw grid and add it to first H layer
 		self.hLayout.addWidget(self.Grid)
 		self.hLayout.addStretch()
 		#draw forms/buttons and add it to V layer
-		vLayout.addWidget(self.rowsLabel)
-		vLayout.addWidget(self.rowsComboBox)
-		vLayout.addWidget(self.columnsLabel)
-		vLayout.addWidget(self.columnsComboBox)
-		vLayout.addWidget(self.updateGridButton)
+		self.vLayout.addWidget(self.rowsLabel)
+		self.vLayout.addWidget(self.rowsComboBox)
+		self.vLayout.addWidget(self.columnsLabel)
+		self.vLayout.addWidget(self.columnsComboBox)
+		self.vLayout.addWidget(self.updateGridButton)
+		self.vLayout.addWidget(self.refreshGridButton)
 		#vLayout.addWidget(self.nodeLabel)
 		#vLayout.addWidget(self.nodePosition)
 		#vLayout.addLayout(nodeFormLayout)
-		vLayout.addWidget(self.directionLabel)
-		vLayout.addWidget(self.directionComboBox)
-		vLayout.addWidget(self.startPoint)
-		vLayout.addWidget(self.endPoint)
-		vLayout.addWidget(self.dButton)
-		vLayout.addWidget(self.aButton)
-		vLayout.addWidget(self.listLabel)
-		vLayout.addWidget(self.listWidget)
-		vLayout.addStretch()
+		self.vLayout.addWidget(self.directionLabel)
+		self.vLayout.addWidget(self.directionComboBox)
+		self.vLayout.addWidget(self.startPoint)
+		self.vLayout.addWidget(self.endPoint)
+		self.vLayout.addWidget(self.dButton)
+		self.vLayout.addWidget(self.aButton)
+		self.vLayout.addWidget(self.listLabel)
+		self.vLayout.addWidget(self.refreshPathButton)
+		self.vLayout.addWidget(self.listWidget)
+		self.vLayout.addStretch()
 		#style vLayout with forms.css
 		QPushButton.setStyleSheet(self, open("forms.css").read())
 			
 		#add the V layer into the H layer
 		outerLayout.addLayout(self.hLayout)
-		outerLayout.addLayout(vLayout)
+		outerLayout.addLayout(self.vLayout)
 
 		container = QWidget()
 		container.setLayout(outerLayout)
@@ -362,6 +372,19 @@ class MainWindow(QMainWindow):
 		#draw the grid
 		self.setCentralWidget(container)
 
+	#used to refresh the path list
+	def refreshPath(self):
+		self.vLayout.removeWidget(self.listWidget)
+		self.listWidget = QListWidget()
+		self.vLayout.addWidget(self.listWidget)
+	
+	#used to refresh the grid
+	def refreshGrid(self):
+		self.hLayout.removeWidget(self.Grid)
+		self.Grid = Grid(self, self.x_range, self.y_range, self.matrix, self.nodeCount)
+		self.hLayout.addWidget(self.Grid)
+
+	#used to update the grid size
 	def updateGridSize(self):
 		#convert str to int
 		newRows = int(self.rowsComboBox.currentText())
@@ -375,38 +398,20 @@ class MainWindow(QMainWindow):
 		self.hLayout.addWidget(self.Grid)
 
 	
+	#run when dijkstra search is clicked
 	def dSearchClicked(self, checked):
 		print("Beginning Dijkstra search...", checked)
-		#get the nodes in the grid
-		currentGrid = self.Grid	
-		#refresh grid to update data before assigning values
-		currentGrid.update()
-		nodeList = currentGrid.getNodeChildren()
-		startNode, endNode = None, None
-		wallNodes = []
-		#iterate through the nodeList in order to find the start node, end node and wall nodes
-		for node in nodeList:
-			if node.isStart == True:
-				#print("START NODE SELECTED: ", node.point)
-				startNode = node
-			if node.isEnd == True:
-				#print("END NODE SELECTED: ", node.point)
-				endNode = node
-			if node.isWall == True:
-				#print("WALL NODE SELECTED: ", node.point)
-				wallNodes.append(node)
-		
-		#now that we have the list of nodes and their associated values -> start the dijkstra node
-		DIRECTION = self.directionComboBox.currentText()
+		startNode, endNode, matrix, DIRECTION = self.getAlgoInfo()
 		#make sure a start/end node are selected before continuing
 		if startNode != None and endNode != None:
 			#update the label of start node + end node
 			self.startPoint.setText("START NODE: " + str(startNode.point))
 			self.endPoint.setText("END NODE: " + str(endNode.point))
-			self.dijkstraAlgorithm(startNode, endNode, nodeList, DIRECTION)
+			self.dijkstraAlgorithm(startNode, endNode, matrix, DIRECTION)
 		else:
 			print("Please select a start/end node!", startNode, endNode)
 	
+	#used by both algo's to determine the neighbors
 	def neighbors(self, currentNode, matrix, DIRECTION):
 		x,y = currentNode.point
 		DIRECTION = int(DIRECTION)
@@ -437,7 +442,7 @@ class MainWindow(QMainWindow):
 			neighborNodes = self.neighbors(currentNode, matrix, DIRECTION)
 			#mark every neighbor as visited
 			for node in neighborNodes:
-				node.isVisited = True
+				#node.isVisited = True
 				tentativeCost = currentNode.distance + node.move_cost()
 				if node in vSet or node.isWall == True:
 					continue
@@ -464,33 +469,100 @@ class MainWindow(QMainWindow):
 			self.listWidget.insertItem(count, str(currentNode.point))
 			currentNode = currentNode.parent
 			count += 1
+	
+	#this function is called by both algos in order to get the necessary data (start, end, matrix, direction)
+	def getAlgoInfo(self):
+		#get the nodes in the grid
+		currentGrid = self.Grid	
+		#refresh grid to update data before assigning values
+		currentGrid.update()
+		matrix = currentGrid.getNodeChildren()
+		startNode, endNode = None, None
+		wallNodes = []
+		#iterate through the nodeList in order to find the start node, end node and wall nodes
+		for node in matrix:
+			if node.isStart == True:
+				startNode = node
+			if node.isEnd == True:
+				endNode = node
+			if node.isWall == True:
+				wallNodes.append(node)
 
+		DIRECTION = self.directionComboBox.currentText()
+
+		return startNode, endNode, matrix, DIRECTION
+		
+
+	#used by astar algo to determine manhattan distance to end node
+	def manhattanDistance(self, currentNode, goalNode):
+		nodeX, nodeY = currentNode.point
+		goalX, goalY = goalNode.point
+
+		dx = abs(nodeX - goalX)
+		dy = abs(nodeY - goalY)
+		cost = currentNode.cost
+		return cost * (dx+dy)
+
+	#run when astar button is clicked
 	def aSearchClicked(self, checked):
 		print("Beginning A* search...", checked)
+		startNode, endNode, matrix, DIRECTION = self.getAlgoInfo()
+		#make sure a start/end node are selected before continuing
+		if startNode != None and endNode != None:
+			#update the label of start node + end node
+			self.startPoint.setText("START NODE: " + str(startNode.point))
+			self.endPoint.setText("END NODE: " + str(endNode.point))
+			#astar returns a final path
+			closedSet = self.astarAlgorithm(startNode, endNode, matrix, DIRECTION)
+			count = 0
+			for node in closedSet[::-1]:
+				self.listWidget.insertItem(count, str(node.point))
+				count += 1
+		else:
+			print("Please select a start/end node!", startNode, endNode)
 	
 	#astar algorithm for GUI
 	def astarAlgorithm(self, startNode, endNode, matrix, DIRECTION):
-		pass
+		openSet = [startNode]
+		closedSet = []
+		while openSet:
+			currentNode = min(openSet, key=lambda f: f.G + f.H)
+			currentNode.isPath = True
+			if currentNode == endNode:
+				finalPath = []
+				while currentNode.parent:
+					finalPath.append(currentNode.parent)
+					currentNode = currentNode.parent
+				finalPath.append(currentNode)
+				print("FINISHED")
+				return finalPath[::-1]
+			
+			openSet.remove(currentNode)
+			closedSet.append(currentNode)
+			for node in self.neighbors(currentNode, matrix, DIRECTION):
+				#node.isVisited = True
+				#if the node is in the closet set/is a wall, continue
+				if node in closedSet or node.isWall == True:
+					continue
+				
+				if node in openSet:
+					newG = currentNode.G + currentNode.move_cost()
+					if node.G > newG:
+						node.G = newG
+						node.parent = currentNode
+				else:
+					node.G = currentNode.G + currentNode.move_cost()
+					node.H = self.manhattanDistance(node, endNode)
+					node.parent = currentNode
+					openSet.append(node)
 
-	"""
-	def contextMenuEvent(self, e):
-		context = QMenu(self)
-		context.addAction(QAction("test 1", self))
-		context.addAction(QAction("test 2", self))
-		context.addAction(QAction("test 3", self))
-		context.exec(e.globalPos())
-	"""
-	#handle logic for what happens when astar button is clicked
-	def astarButtonEvent(self, e):
-		if e.button() == Qt.RightButton:
-			self.label.setText("Mouse Press Event: RIGHT")
+#app starts here
+try:
+	app = QApplication(sys.argv)
+	window = MainWindow()
+	window.show()
 
-app = QApplication(sys.argv)
-window = MainWindow()
-window.show()
-
-app.exec_()
-"""
+	app.exec_()
 except Exception as e:
 	print("Application crashed with message:\n", e)
-"""
+	app.exit()
