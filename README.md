@@ -1,8 +1,6 @@
-<b>Pathfinding algorithms written natively in python3.</b>
+<b>Astar and Dijkstra pathfinding algorithms written natively in python3 + PyQt5.</b>
 
 <b> HOW TO RUN: </b>
-  1. git clone this repo to any local folder
-  2. point the terminal into location where the files are
-  4. use <code>python3 algos/astar.py</code> (or any other .py file inside algos)
-
-Will add wall functionality (block certain nodes and have the path work around it) + a visualization of the paths later
+  1. <code>git clone</code> this repo
+  2. <code> pip3 install requirements.txt </code> to install the PyQt5 modules
+  3. <code>python3 gui.py</code> to open the GUI
