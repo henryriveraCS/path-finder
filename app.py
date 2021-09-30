@@ -12,7 +12,6 @@ from PyQt5.QtGui import (
                             QIcon
                         )
 
-#from gui_dijkstra import dijkstraNode as dNode
 # Only needed for access to command line arguments
 from OSInterface import OSInterface
 import sys
@@ -20,9 +19,10 @@ import time
 import math
 from operator import attrgetter
 
-class dijkstraNode(QWidget):
+#class dijkstraNode(QWidget):
+class Node(QWidget):
     def __init__(self, parent, point, posX, posY, height, width):
-        super(dijkstraNode, self).__init__(parent)
+        super(Node, self).__init__(parent)
         self.point = point
         self.cost = 1 
         self.G = 0
@@ -187,7 +187,7 @@ class Grid(QWidget):
         posX, posY = 0, 0
         for x in self.x_range:
             for y in self.y_range:
-                dNode = dijkstraNode(parent=self, point=(x,y), posX=posX, posY=posY, height=nodeHeight, width=nodeWidth)
+                dNode = Node(parent=self, point=(x,y), posX=posX, posY=posY, height=nodeHeight, width=nodeWidth)
                 self.createGridLayout(dNode, x, y)
                 #use the nodes own values to draw each instance next to next    
                 self.nodeMatrix.append(dNode)
@@ -243,12 +243,6 @@ class MainWindow(QMainWindow):
         self.Grid = Grid(self, self.x_range, self.y_range, self.matrix, self.nodeCount)
 
         #label logic
-        #aLabel = QLabel("Astar search")
-        #dLabel = QLabel("Dijkstra search")
-        self.nodeLabel = QLabel()
-        #self.gridLabel.setAlignment(Qt.AlignCenter)
-        self.nodeLabel.setText("Node Info:")
-        self.nodeLabel.setAlignment(Qt.AlignCenter)
 
         self.rowsLabel = QLabel()
         self.rowsLabel.setText("ROWS:")
@@ -324,12 +318,6 @@ class MainWindow(QMainWindow):
         self.aButton.clicked.connect(self.aSearchClicked)
         self.dButton.clicked.connect(self.dSearchClicked)
 
-        #self.refreshGridButton = QPushButton("REFRESH GRID")
-        #self.refreshGridButton.clicked.connect(self.refreshGrid)
-
-        #self.refreshPathButton = QPushButton("REFRESH PATH LIST")
-        #self.refreshPathButton.clicked.connect(self.refreshPath)
-
         self.refreshButton = QPushButton("REFRESH")
         self.refreshButton.clicked.connect(self.refreshPath)
         self.refreshButton.clicked.connect(self.refreshGrid)
@@ -344,19 +332,17 @@ class MainWindow(QMainWindow):
         outerLayout = QHBoxLayout()
         self.hLayout = QHBoxLayout()
         self.vLayout = QVBoxLayout()
+
         #draw grid and add it to first H layer
         self.hLayout.addWidget(self.Grid)
         self.hLayout.addStretch()
+
         #draw forms/buttons and add it to V layer
         self.vLayout.addWidget(self.rowsLabel)
         self.vLayout.addWidget(self.rowsComboBox)
         self.vLayout.addWidget(self.columnsLabel)
         self.vLayout.addWidget(self.columnsComboBox)
         self.vLayout.addWidget(self.updateGridButton)
-        #self.vLayout.addWidget(self.refreshGridButton)
-        #vLayout.addWidget(self.nodeLabel)
-        #vLayout.addWidget(self.nodePosition)
-        #vLayout.addLayout(nodeFormLayout)
         self.vLayout.addWidget(self.directionLabel)
         self.vLayout.addWidget(self.directionComboBox)
         self.vLayout.addWidget(self.startPoint)
@@ -366,10 +352,10 @@ class MainWindow(QMainWindow):
         self.vLayout.addWidget(self.dButton)
         self.vLayout.addWidget(self.aButton)
         self.vLayout.addWidget(self.listLabel)
-        #self.vLayout.addWidget(self.refreshPathButton)
         self.vLayout.addWidget(self.listWidget)
         self.vLayout.addWidget(self.refreshButton)
         self.vLayout.addStretch()
+
         #style vLayout with forms.css
         QPushButton.setStyleSheet(self, open(self.osi.GetStyleSheet() ).read())
             
@@ -395,7 +381,6 @@ class MainWindow(QMainWindow):
 
     #used to update the grid size
     def updateGridSize(self):
-        #convert str to int
         newRows = int(self.rowsComboBox.currentText())
         newCols = int(self.columnsComboBox.currentText())
         print("NEW ROWS: ", newRows, "NEW COLS: ", newCols)
@@ -409,7 +394,7 @@ class MainWindow(QMainWindow):
     
     #run when dijkstra search is clicked
     def dSearchClicked(self, checked):
-        print("Beginning Dijkstra search...", checked)
+        print("Beginning Dijkstra search...")
         startNode, endNode, matrix, DIRECTION, SPEED = self.getAlgoInfo()
         #make sure a start/end node are selected before continuing
         if startNode != None and endNode != None:
@@ -453,7 +438,7 @@ class MainWindow(QMainWindow):
             #mark every neighbor as visited
             for node in neighborNodes:
                 node.isVisisted = True
-                #time.sleep(0.2)
+                #time.sleep(0.1)
                 node.repaint()
                 tentativeCost = currentNode.distance + node.move_cost()
                 if node in vSet or node.isWall == True:
@@ -487,7 +472,7 @@ class MainWindow(QMainWindow):
             currentNode.repaint()
             #time.sleep the length the user chose
             time.sleep(SPEED)
-            print("path to final node: ", currentNode, currentNode.point)
+            print("Path to final node: ", currentNode.point)
             #update the color of the node to represent the walked path
             self.listWidget.insertItem(count, str(currentNode.point))
             #currentNode = currentNode.parent
@@ -529,7 +514,7 @@ class MainWindow(QMainWindow):
 
     #run when astar button is clicked
     def aSearchClicked(self, checked):
-        print("Beginning A* search...", checked)
+        print("Beginning A* search...")
         startNode, endNode, matrix, DIRECTION, SPEED = self.getAlgoInfo()
         #make sure a start/end node are selected before continuing
         if startNode != None and endNode != None:
@@ -539,12 +524,17 @@ class MainWindow(QMainWindow):
             #astar returns a final path
             closedSet = self.astarAlgorithm(startNode, endNode, matrix, DIRECTION, SPEED)
             count = 0
-            for node in closedSet[::-1]:
-                self.listWidget.insertItem(count, str(node.point))
-                node.isVisisted = False
-                node.isPath = True
-                node.repaint()
-                count += 1
+            #for node in closedSet[::-1]:
+            for node in closedSet:
+                #to prevent duplicate start node don't display the first node
+                if node != closedSet[0]:
+                    print("Path to final node: ", node.point)
+                    self.listWidget.insertItem(count, str(node.point))
+                    node.isVisisted = False
+                    node.isPath = True
+                    node.repaint()
+                    count += 1
+            print("FINISHED")
         else:
             print("Please select a start/end node!", startNode, endNode)
     
@@ -564,7 +554,6 @@ class MainWindow(QMainWindow):
                     finalPath.append(currentNode.parent)
                     currentNode = currentNode.parent
                 finalPath.append(currentNode)
-                print("FINISHED")
                 return finalPath[::-1]
             
             openSet.remove(currentNode)
@@ -572,7 +561,6 @@ class MainWindow(QMainWindow):
             for node in self.neighbors(currentNode, matrix, DIRECTION):
                 node.isVisited = True
                 node.repaint()
-                #node.isPath = True
                 #if the node is in the closet set/is a wall, continue
                 if node in closedSet or node.isWall == True:
                     continue
