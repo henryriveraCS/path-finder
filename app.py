@@ -378,9 +378,12 @@ class MainWindow(QMainWindow):
 
     #used to refresh the path list
     def refreshPath(self):
+        self.listWidget.clear()
+        """
         self.vLayout.removeWidget(self.listWidget)
         self.listWidget = QListWidget()
         self.vLayout.addWidget(self.listWidget)
+        """
     
     #used to refresh the grid
     def refreshGrid(self):
