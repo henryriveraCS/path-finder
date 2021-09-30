@@ -1,4 +1,4 @@
-#this file deals with interacing with the OS by returning paths/file names/
+#this file deals with interacting with the OS by returning paths/file names/
 #iterating through files/ etc
 import os
 import json
