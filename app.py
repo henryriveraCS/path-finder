@@ -220,14 +220,13 @@ class Grid(QWidget):
         return nodeList
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, osi):
         super().__init__()
 
-        self.osi = OSInterface()
+        self.osi = osi
 
         self.setWindowTitle(self.osi.GetTitle())
         self.setMinimumSize(QSize(self.osi.GetHeight(), self.osi.GetWidth()))
-        self.setWindowIcon(QIcon(self.osi.GetWindowsIcon() ))
 
         #data for grid:
         self.x_range = range(11)
@@ -586,7 +585,10 @@ class MainWindow(QMainWindow):
 #app starts here
 try:
     app = QApplication(sys.argv)
-    window = MainWindow()
+    #create OS Interface instance and pass it along to the main window
+    osi = OSInterface()
+    app.setWindowIcon(QIcon(osi.GetWindowsIcon() ))
+    window = MainWindow(osi)
     window.show()
 
     app.exec_()
