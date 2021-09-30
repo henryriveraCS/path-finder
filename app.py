@@ -58,7 +58,7 @@ class dijkstraNode(QWidget):
         self.nodeStatus.setText("Not Set")
         
         #initalize UI features
-        self.initUI()
+        #self.initUI()
     
     #this function is called by GRID in order to get the new positonX + positionY of this current node instance
     #E.G: first node will tell Grid where to start the second node, second node tells Grid where to draw third node...
@@ -123,9 +123,11 @@ class dijkstraNode(QWidget):
             else:
                 self.setEndNode()
 
+    """
     def initUI(self):
         pass
         #print("dijkstra node loaded: ", self.point)
+    """
     
     def setEndNode(self):
         print("END NODE: ", self.point)
@@ -322,11 +324,15 @@ class MainWindow(QMainWindow):
         self.aButton.clicked.connect(self.aSearchClicked)
         self.dButton.clicked.connect(self.dSearchClicked)
 
-        self.refreshGridButton = QPushButton("REFRESH GRID")
-        self.refreshGridButton.clicked.connect(self.refreshGrid)
+        #self.refreshGridButton = QPushButton("REFRESH GRID")
+        #self.refreshGridButton.clicked.connect(self.refreshGrid)
 
-        self.refreshPathButton = QPushButton("REFRESH PATH LIST")
-        self.refreshPathButton.clicked.connect(self.refreshPath)
+        #self.refreshPathButton = QPushButton("REFRESH PATH LIST")
+        #self.refreshPathButton.clicked.connect(self.refreshPath)
+
+        self.refreshButton = QPushButton("REFRESH")
+        self.refreshButton.clicked.connect(self.refreshPath)
+        self.refreshButton.clicked.connect(self.refreshGrid)
 
         #logic for path list
         self.listWidget = QListWidget()
@@ -347,7 +353,7 @@ class MainWindow(QMainWindow):
         self.vLayout.addWidget(self.columnsLabel)
         self.vLayout.addWidget(self.columnsComboBox)
         self.vLayout.addWidget(self.updateGridButton)
-        self.vLayout.addWidget(self.refreshGridButton)
+        #self.vLayout.addWidget(self.refreshGridButton)
         #vLayout.addWidget(self.nodeLabel)
         #vLayout.addWidget(self.nodePosition)
         #vLayout.addLayout(nodeFormLayout)
@@ -360,11 +366,12 @@ class MainWindow(QMainWindow):
         self.vLayout.addWidget(self.dButton)
         self.vLayout.addWidget(self.aButton)
         self.vLayout.addWidget(self.listLabel)
-        self.vLayout.addWidget(self.refreshPathButton)
+        #self.vLayout.addWidget(self.refreshPathButton)
         self.vLayout.addWidget(self.listWidget)
+        self.vLayout.addWidget(self.refreshButton)
         self.vLayout.addStretch()
         #style vLayout with forms.css
-        #QPushButton.setStyleSheet(self, open(self.osi.GetStyleSheet() ).read())
+        QPushButton.setStyleSheet(self, open(self.osi.GetStyleSheet() ).read())
             
         #add the V layer into the H layer
         outerLayout.addLayout(self.hLayout)
