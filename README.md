@@ -7,13 +7,13 @@
   3. <code>python3 app.py</code> to open the GUI
 
 
-Grid Controls:
-Left Click: sets the start node
-Right Click: sets the end node
-Middle Click: sets a wall node
+Grid Controls:<br/>
+Left Click: sets the start node<br/>
+Right Click: sets the end node<br/>
+Middle Click: sets a wall node<br/>
 
 
 TODO:
-Don't allow duplicate start nodes/end nodes
-Allow user to set overlapping paths
-Clean up UI with nodes
+- Don't allow duplicate start nodes/end nodes
+- Allow user to set overlapping paths
+- Clean up UI with nodes
