@@ -414,7 +414,7 @@ class MainWindow(QMainWindow):
             #mark every neighbor as visited
             for node in neighborNodes:
                 node.isVisisted = True
-                node.update()
+                node.repaint()
                 tentativeCost = currentNode.distance + node.MoveCost()
                 if node in vSet or node.isWall == True:
                     continue
