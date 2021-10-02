@@ -11,7 +11,3 @@ Grid Controls:<br/>
 Left Click: sets the start node<br/>
 Right Click: sets the end node<br/>
 Middle Click: sets a wall node<br/>
-
-
-TODO for bugs:
-- Don't allow duplicate start nodes/end nodes (if one exist on the grid, remove it and set it at new left click)
