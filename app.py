@@ -344,6 +344,7 @@ class MainWindow(QMainWindow):
     #used to refresh the grid
     def refreshGrid(self):
         self.hLayout.removeWidget(self.Grid)
+        self.Grid.update()
         self.Grid = Grid(self, self.x_range, self.y_range, self.matrix, self.nodeCount)
         self.hLayout.addWidget(self.Grid)
 
