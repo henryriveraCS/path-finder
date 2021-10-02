@@ -414,6 +414,7 @@ class MainWindow(QMainWindow):
             #mark every neighbor as visited
             for node in neighborNodes:
                 node.isVisisted = True
+                node.update()
                 tentativeCost = currentNode.distance + node.MoveCost()
                 if node in vSet or node.isWall == True:
                     continue
@@ -424,7 +425,6 @@ class MainWindow(QMainWindow):
                         for i in uSet:
                             if i.point == node.point:
                                 i = node
-                node.update()
             vSet.append(currentNode)
             lowestCostNode = min(uSet, key=attrgetter("distance"))
             currentNode = lowestCostNode
