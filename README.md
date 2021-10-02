@@ -15,4 +15,3 @@ Middle Click: sets a wall node<br/>
 
 TODO for bugs:
 - Don't allow duplicate start nodes/end nodes (if one exist on the grid, remove it and set it at new left click)
-- Fix issue when resizing grid where the old grid shows up in the background
