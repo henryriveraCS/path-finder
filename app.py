@@ -35,8 +35,8 @@ class Node(QWidget):
         self.backgroundColor = Qt.white
         self.wallColor = QColor(87, 133, 222)
         self.startColor = QColor(31, 222, 116)
-        self.pathColor = QColor(241, 204, 102)
-        self.visistedColor = QColor(0, 174, 186)
+        self.pathColor = QColor(87, 133, 222)
+        self.visistedColor = QColor(255, 27, 131)
         self.endColor = QColor(222, 31, 37)
         self.isWall = False
         self.isStart = False
