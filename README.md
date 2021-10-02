@@ -13,7 +13,6 @@ Right Click: sets the end node<br/>
 Middle Click: sets a wall node<br/>
 
 
-TODO:
-- Don't allow duplicate start nodes/end nodes
-- Allow user to set overlapping paths
-- Clean up UI with nodes
+TODO for bugs:
+- Don't allow duplicate start nodes/end nodes (if one exist on the grid, remove it and set it at new left click)
+- Fix issue when resizing grid where the old grid shows up in the background
