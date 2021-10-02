@@ -2,14 +2,13 @@ from PyQt5.QtCore import QSize, Qt, QRectF, QPoint
 from PyQt5.QtWidgets import (
                             QApplication, QWidget, QPushButton,
                             QMainWindow, QLabel, QVBoxLayout,
-                            QAction, QMenu, QHBoxLayout,
-                            QGraphicsView, QFormLayout, QLineEdit,
-                            QFormLayout, QCheckBox, QComboBox,
+                            QHBoxLayout, QGraphicsView, QFormLayout,
+                            QLineEdit, QFormLayout, QComboBox,
                             QGridLayout, QGroupBox, QListWidget
                             )
 from PyQt5.QtGui import (
-                            QPainter, QBrush, QColor, QFont, QMouseEvent, QCursor,
-                            QIcon
+                            QPainter, QBrush, QColor,
+                            QFont, QIcon
                         )
 
 # Only needed for access to command line arguments
@@ -50,18 +49,11 @@ class Node(QWidget):
         self.isEnd = False
         self.isVisisted = False
         self.isPath = False
-        self.nodeStatus = QLabel()
         self.height = height
         self.width = width
         self.posX = posX
         self.posY = posY
-        self.nodeStatus.setText("Not Set")
         
-        #initalize UI features
-        #self.initUI()
-    
-    #this function is called by GRID in order to get the new positonX + positionY of this current node instance
-    #E.G: first node will tell Grid where to start the second node, second node tells Grid where to draw third node...
     def paintEvent(self, parent):
         qp = QPainter()
         qp.begin(self)
@@ -91,54 +83,36 @@ class Node(QWidget):
         qp.drawText(QPoint(5, 15), str(self.point))
         qp.end()
     
-    #making the node widget clickable
     def mousePressEvent(self, event):
-        #left click assigns a value to a node as a wall
         if event.button() == Qt.MidButton:
-            #check if node was already filled, if it was -> un-fill it
-            if self.isWall == True:
-                self.isWall = False
-                self.update()
-            else:   
-                #update the wall values
-                self.setWallNode()
+            self.SetNoneNode()
+            self.SetWallNode()
 
         #right click assigns the node as a start node
         if event.button() == Qt.LeftButton:
-            if self.isWall == True:
-                self.isWall = False
-                self.isEnd = False
-                self.isStart = True
-                self.update()
-            else:
-                self.setStartNode()
+            self.SetNoneNode()
+            self.SetStartNode()
 
         #middle click assigns the node as an end node
         if event.button() == Qt.RightButton:
-            if self.isWall == True:
-                self.isWall = False
-                self.isStart = False
-                self.isEnd = True
-                self.update()
-            else:
-                self.setEndNode()
+            self.SetNoneNode()
+            self.SetEndNode()
 
-    """
-    def initUI(self):
-        pass
-        #print("dijkstra node loaded: ", self.point)
-    """
-    
-    def setEndNode(self):
-        print("END NODE: ", self.point)
+    def SetNoneNode(self):
+        self.isWall = False
+        self.isStart = False
+        self.isEnd = False
+        self.backgroundColor = self.backgroundColor
+        self.update()
+
+    def SetEndNode(self):
         self.isWall = False
         self.isStart = False
         self.isEnd = True
         self.backgroundColor = self.endColor
         self.update()
 
-    def setWallNode(self):
-        print("WALL NODE: ", self.point)
+    def SetWallNode(self):
         self.isStart = False
         self.isEnd = False
         self.isWall = True
@@ -146,15 +120,14 @@ class Node(QWidget):
         self.update()
 
     #this function is used when you select a starting node(left mouse click)
-    def setStartNode(self):
-        print("START NODE: ", self.point)
+    def SetStartNode(self):
         self.isEnd = False
         self.isWall = False
         self.isStart = True
         self.backgroundColor = self.startColor
         self.update()
 
-    def move_cost(self):
+    def MoveCost(self):
         return self.cost
 
 class Grid(QWidget):
@@ -171,7 +144,7 @@ class Grid(QWidget):
         #represents size of nodes (will be updated as window size changes)
         self.gridLayout = QGridLayout()
         self.windowLayout = QVBoxLayout()
-        self.HGroupBox = QGroupBox("grid")
+        self.HGroupBox = QGroupBox()
         self.setLayout(self.windowLayout)
         self.windowLayout.addWidget(self.HGroupBox)
         #initialize UI (Qt won't load paintEvent without minimum size being set)
@@ -197,7 +170,6 @@ class Grid(QWidget):
     #add a node widget with this function at position X,Y
     def createGridLayout(self, dNode, x, y):
         self.gridLayout.addWidget(dNode, x, y)
-
         self.HGroupBox.setLayout(self.gridLayout)
 
     #this function returns height,width for the node to use to draw itself
@@ -208,7 +180,7 @@ class Grid(QWidget):
         return nodeHeight, nodeWidth
 
     #this function is used by the main window to get all node instances from the grid and returning a list of them
-    def getNodeChildren(self):
+    def GetNodeChildren(self):
         nodeList = []
         for x in self.x_range:
             for y in self.y_range:
@@ -281,7 +253,7 @@ class MainWindow(QMainWindow):
             rCount += 1
         
         #set default here
-        self.rowsComboBox.setCurrentIndex(4)
+        self.rowsComboBox.setCurrentIndex(9)
 
         self.columnsComboBox = QComboBox()
         cCount = 1
@@ -289,8 +261,8 @@ class MainWindow(QMainWindow):
         while cCount < columns:
             self.columnsComboBox.addItem(str(cCount))
             cCount += 1
-        #set default
-        self.columnsComboBox.setCurrentIndex(4)
+        #set default here
+        self.columnsComboBox.setCurrentIndex(9)
 
         self.speedComboBox = QComboBox()
         tCount = 0
@@ -310,7 +282,7 @@ class MainWindow(QMainWindow):
 
         #button logic
         self.updateGridButton = QPushButton("Update Grid")
-        self.updateGridButton.clicked.connect(self.updateGridSize)
+        self.updateGridButton.clicked.connect(self.UpdateGridSize)
 
         self.aButton = QPushButton("Astar Search")
         self.dButton = QPushButton("Dijkstra Search")
@@ -319,7 +291,7 @@ class MainWindow(QMainWindow):
         self.dButton.clicked.connect(self.dSearchClicked)
 
         self.refreshButton = QPushButton("REFRESH")
-        self.refreshButton.clicked.connect(self.refreshPath)
+        self.refreshButton.clicked.connect(self.RefreshPath)
         self.refreshButton.clicked.connect(self.refreshGrid)
 
         #logic for path list
@@ -333,11 +305,8 @@ class MainWindow(QMainWindow):
         self.hLayout = QHBoxLayout()
         self.vLayout = QVBoxLayout()
 
-        #draw grid and add it to first H layer
         self.hLayout.addWidget(self.Grid)
-        self.hLayout.addStretch()
 
-        #draw forms/buttons and add it to V layer
         self.vLayout.addWidget(self.rowsLabel)
         self.vLayout.addWidget(self.rowsComboBox)
         self.vLayout.addWidget(self.columnsLabel)
@@ -366,11 +335,10 @@ class MainWindow(QMainWindow):
         container = QWidget()
         container.setLayout(outerLayout)
 
-        #draw the grid
         self.setCentralWidget(container)
 
     #used to refresh the path list
-    def refreshPath(self):
+    def RefreshPath(self):
         self.listWidget.clear()
     
     #used to refresh the grid
@@ -380,22 +348,23 @@ class MainWindow(QMainWindow):
         self.hLayout.addWidget(self.Grid)
 
     #used to update the grid size
-    def updateGridSize(self):
+    def UpdateGridSize(self):
         newRows = int(self.rowsComboBox.currentText())
         newCols = int(self.columnsComboBox.currentText())
-        print("NEW ROWS: ", newRows, "NEW COLS: ", newCols)
         self.x_range, self.y_range = range(newRows), range(newCols)
-        #re-intialize grid with new x_range + new y_range for new rows/cols
+        #this will kill the grid instance -> we can now re-initialize it with
+        #the new values
+        self.Grid.deleteLater()
         self.hLayout.removeWidget(self.Grid)
+
         self.Grid = Grid(self, self.x_range, self.y_range, self.matrix, self.nodeCount)
-        #update the grid so it redraws itself
         self.hLayout.addWidget(self.Grid)
 
     
     #run when dijkstra search is clicked
     def dSearchClicked(self, checked):
         print("Beginning Dijkstra search...")
-        startNode, endNode, matrix, DIRECTION, SPEED = self.getAlgoInfo()
+        startNode, endNode, matrix, DIRECTION, SPEED = self.GetAlgoInfo()
         #make sure a start/end node are selected before continuing
         if startNode != None and endNode != None:
             #update the label of start node + end node
@@ -406,7 +375,7 @@ class MainWindow(QMainWindow):
             print("Please select a start/end node!", startNode, endNode)
     
     #used by both algo's to determine the neighbors
-    def neighbors(self, currentNode, matrix, DIRECTION):
+    def Neighbors(self, currentNode, matrix, DIRECTION):
         x,y = currentNode.point
         #make sure it's an int
         DIRECTION = int(DIRECTION)
@@ -434,13 +403,13 @@ class MainWindow(QMainWindow):
         currentNode = startNode
         uSet.remove(currentNode)
         while currentNode != endNode:
-            neighborNodes = self.neighbors(currentNode, matrix, DIRECTION)
+            neighborNodes = self.Neighbors(currentNode, matrix, DIRECTION)
             #mark every neighbor as visited
             for node in neighborNodes:
                 node.isVisisted = True
                 #time.sleep(0.1)
                 node.repaint()
-                tentativeCost = currentNode.distance + node.move_cost()
+                tentativeCost = currentNode.distance + node.MoveCost()
                 if node in vSet or node.isWall == True:
                     continue
                 else:
@@ -479,12 +448,12 @@ class MainWindow(QMainWindow):
             count += 1
     
     #this function is called by both algos in order to get the necessary data (start, end, matrix, direction)
-    def getAlgoInfo(self):
+    def GetAlgoInfo(self):
         #get the nodes in the grid
         currentGrid = self.Grid 
         #refresh grid to update data before assigning values
         currentGrid.update()
-        matrix = currentGrid.getNodeChildren()
+        matrix = currentGrid.GetNodeChildren()
         startNode, endNode = None, None
         wallNodes = []
         #iterate through the nodeList in order to find the start node, end node and wall nodes
@@ -503,7 +472,7 @@ class MainWindow(QMainWindow):
         
 
     #used by astar algo to determine manhattan distance to end node
-    def manhattanDistance(self, currentNode, goalNode):
+    def ManhattanDistance(self, currentNode, goalNode):
         nodeX, nodeY = currentNode.point
         goalX, goalY = goalNode.point
 
@@ -515,7 +484,7 @@ class MainWindow(QMainWindow):
     #run when astar button is clicked
     def aSearchClicked(self, checked):
         print("Beginning A* search...")
-        startNode, endNode, matrix, DIRECTION, SPEED = self.getAlgoInfo()
+        startNode, endNode, matrix, DIRECTION, SPEED = self.GetAlgoInfo()
         #make sure a start/end node are selected before continuing
         if startNode != None and endNode != None:
             #update the label of start node + end node
@@ -558,20 +527,20 @@ class MainWindow(QMainWindow):
             
             openSet.remove(currentNode)
             closedSet.append(currentNode)
-            for node in self.neighbors(currentNode, matrix, DIRECTION):
+            for node in self.Neighbors(currentNode, matrix, DIRECTION):
                 node.isVisited = True
                 node.repaint()
                 #if the node is in the closet set/is a wall, continue
                 if node in closedSet or node.isWall == True:
                     continue
                 if node in openSet:
-                    newG = currentNode.G + currentNode.move_cost()
+                    newG = currentNode.G + currentNode.MoveCost()
                     if node.G > newG:
                         node.G = newG
                         node.parent = currentNode
                 else:
-                    node.G = currentNode.G + currentNode.move_cost()
-                    node.H = self.manhattanDistance(node, endNode)
+                    node.G = currentNode.G + currentNode.MoveCost()
+                    node.H = self.ManhattanDistance(node, endNode)
                     node.parent = currentNode
                     openSet.append(node)
 
