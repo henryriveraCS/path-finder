@@ -14,6 +14,8 @@ class OSInterface:
             self.width = int(self.data["Width"])
             self.iconPath = self.cwd + self.data["WindowIcon"]
             self.styleSheetPath = self.cwd + self.data["StyleSheet"]
+            self.gridHeight = int(self.data["GridHeight"])
+            self.gridWidth = int(self.data["GridWidth"])
 
     def CurrentDirectory(self):
         return os.getcwd() + "/"
@@ -32,3 +34,9 @@ class OSInterface:
     
     def GetTitle(self):
         return self.appTitle
+
+    def GetGridHeight(self):
+        return self.gridHeight
+    
+    def GetGridWidth(self):
+        return self.gridWidth
