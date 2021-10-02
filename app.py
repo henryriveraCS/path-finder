@@ -4,7 +4,8 @@ from PyQt5.QtWidgets import (
                             QMainWindow, QLabel, QVBoxLayout,
                             QHBoxLayout, QGraphicsView, QFormLayout,
                             QLineEdit, QFormLayout, QComboBox,
-                            QGridLayout, QGroupBox, QListWidget
+                            QGridLayout, QGroupBox, QListWidget,
+                            QMessageBox
                             )
 from PyQt5.QtGui import (
                             QPainter, QBrush, QColor,
@@ -18,31 +19,24 @@ import time
 import math
 from operator import attrgetter
 
-#class dijkstraNode(QWidget):
 class Node(QWidget):
     def __init__(self, parent, point, posX, posY, height, width):
         super(Node, self).__init__(parent)
+        self.parent = parent
         self.point = point
         self.cost = 1 
         self.G = 0
         self.H = 0
-        self.parent = None
+        self.Parent = None
         self.distance = float(math.inf)
-        #node parent is used to prevent weird bugs with managing windows since it also uses "parent" as a parameter
-        self.nodeParent = None
         self.wall = False
 
         #QT metadata for node
-        #this is used by Grid to determine WHERE to place the node object
-        #use the size of parent window to determine how big to make the nodes
-        #use parent size to determine how to draw these nodes
-        #self.setMinimumSize(QSize(parent.height, parent.width))
-        #self.setMaximumSize(QSize(parent.height+1, parent.width+1))
         self.backgroundColor = Qt.white
         self.wallColor = QColor(87, 133, 222)
         self.startColor = QColor(31, 222, 116)
         self.pathColor = QColor(241, 204, 102)
-        self.visistedColor = QColor(255, 0, 102)
+        self.visistedColor = QColor(0, 174, 186)
         self.endColor = QColor(222, 31, 37)
         self.isWall = False
         self.isStart = False
@@ -88,15 +82,21 @@ class Node(QWidget):
             self.SetNoneNode()
             self.SetWallNode()
 
-        #right click assigns the node as a start node
         if event.button() == Qt.LeftButton:
             self.SetNoneNode()
-            self.SetStartNode()
+            #check if another start exist via parent widget
+            if self.parent.startNode == None:
+                self.SetStartNode()
+                self.parent.startNode = self
+            else:
+                self.parent.msgBox.exec_()
 
-        #middle click assigns the node as an end node
         if event.button() == Qt.RightButton:
-            self.SetNoneNode()
-            self.SetEndNode()
+            if self.parent.endNode == None:
+                self.SetEndNode()
+                self.parent.endNode = self
+            else:
+                self.parent.msgBox.exec_()
 
     def SetNoneNode(self):
         self.isWall = False
@@ -119,7 +119,6 @@ class Node(QWidget):
         self.backgroundColor = self.wallColor
         self.update()
 
-    #this function is used when you select a starting node(left mouse click)
     def SetStartNode(self):
         self.isEnd = False
         self.isWall = False
@@ -140,7 +139,9 @@ class Grid(QWidget):
         self.cols = len(y_range)
         self.matrix = matrix
         self.nodeMatrix = []
-        #this is used for drawing
+        #these values are used to prevent duplicate start/end nodes
+        self.startNode = None
+        self.endNode = None
         #represents size of nodes (will be updated as window size changes)
         self.gridLayout = QGridLayout()
         self.windowLayout = QVBoxLayout()
@@ -148,32 +149,34 @@ class Grid(QWidget):
         self.setLayout(self.windowLayout)
         self.windowLayout.addWidget(self.HGroupBox)
         #initialize UI (Qt won't load paintEvent without minimum size being set)
-        self.height = 800
-        self.width = 800
+        self.height = parent.osi.GetGridHeight()
+        self.width = parent.osi.GetGridWidth()
         self.setMinimumSize(QSize(self.width, self.height))
+
+        self.msgBox = QMessageBox()
+        self.msgBox.setWindowTitle("Warning")
+        self.msgBox.setText("Start/End node has already been selected. Please refresh to clear out your selection")
 
         self.initUI()
     
     def initUI(self):
-        #get the nodeSize that each node needs to be before calling dNode
-        nodeHeight, nodeWidth = self.nodeSize()
+        nodeHeight, nodeWidth = self.NodeSize()
         posX, posY = 0, 0
         for x in self.x_range:
             for y in self.y_range:
-                dNode = Node(parent=self, point=(x,y), posX=posX, posY=posY, height=nodeHeight, width=nodeWidth)
-                self.createGridLayout(dNode, x, y)
-                #use the nodes own values to draw each instance next to next    
-                self.nodeMatrix.append(dNode)
+                node = Node(parent=self, point=(x,y), posX=posX, posY=posY, height=nodeHeight, width=nodeWidth)
+                self.CreateGridLayout(node, x, y)
+                self.nodeMatrix.append(node)
 
         self.update()
     
     #add a node widget with this function at position X,Y
-    def createGridLayout(self, dNode, x, y):
-        self.gridLayout.addWidget(dNode, x, y)
+    def CreateGridLayout(self, node, x, y):
+        self.gridLayout.addWidget(node, x, y)
         self.HGroupBox.setLayout(self.gridLayout)
 
     #this function returns height,width for the node to use to draw itself
-    def nodeSize(self):
+    def NodeSize(self):
         nodeHeight = self.height//self.cols
         nodeWidth = self.width//self.rows
         
@@ -215,7 +218,6 @@ class MainWindow(QMainWindow):
         self.Grid = Grid(self, self.x_range, self.y_range, self.matrix, self.nodeCount)
 
         #label logic
-
         self.rowsLabel = QLabel()
         self.rowsLabel.setText("ROWS:")
         self.rowsLabel.setAlignment(Qt.AlignCenter)
@@ -244,6 +246,7 @@ class MainWindow(QMainWindow):
         self.speedLabel.setText("SPEED (default is 0.1 second per node)")
         self.speedLabel.setAlignment(Qt.AlignCenter)
 
+
         #comboBox logic
         self.rowsComboBox = QComboBox()
         rCount = 1
@@ -265,10 +268,11 @@ class MainWindow(QMainWindow):
         self.columnsComboBox.setCurrentIndex(9)
 
         self.speedComboBox = QComboBox()
-        tCount = 0
+        tCount = float(0)
         while tCount < 1:
-            self.speedComboBox.addItem(str(tCount))
-            tCount += 0.1
+            tmpNum = tCount + 0.10
+            self.speedComboBox.addItem(str(tmpNum))
+            tCount += round(tmpNum, 2)
 
         #form logic (node info such as position, cost, distance, etc)
         nodeFormLayout = QFormLayout()
@@ -292,7 +296,7 @@ class MainWindow(QMainWindow):
 
         self.refreshButton = QPushButton("REFRESH")
         self.refreshButton.clicked.connect(self.RefreshPath)
-        self.refreshButton.clicked.connect(self.refreshGrid)
+        self.refreshButton.clicked.connect(self.RefreshGrid)
 
         #logic for path list
         self.listWidget = QListWidget()
@@ -342,16 +346,18 @@ class MainWindow(QMainWindow):
         self.listWidget.clear()
     
     #used to refresh the grid
-    def refreshGrid(self):
+    def RefreshGrid(self):
         self.hLayout.removeWidget(self.Grid)
+        self.Grid.deleteLater()
         self.Grid.update()
         self.Grid = Grid(self, self.x_range, self.y_range, self.matrix, self.nodeCount)
         self.hLayout.addWidget(self.Grid)
+        self.Grid.update()
 
     #used to update the grid size
     def UpdateGridSize(self):
-        newRows = int(self.rowsComboBox.currentText())
-        newCols = int(self.columnsComboBox.currentText())
+        newRows = int(self.rowsComboBox.currentText()) + 1
+        newCols = int(self.columnsComboBox.currentText()) + 1
         self.x_range, self.y_range = range(newRows), range(newCols)
         #this will kill the grid instance -> we can now re-initialize it with
         #the new values
@@ -371,7 +377,7 @@ class MainWindow(QMainWindow):
             #update the label of start node + end node
             self.startPoint.setText("START NODE: " + str(startNode.point))
             self.endPoint.setText("END NODE: " + str(endNode.point))
-            self.dijkstraAlgorithm(startNode, endNode, matrix, DIRECTION, SPEED)
+            self.DijkstraAlgorithm(startNode, endNode, matrix, DIRECTION, SPEED)
         else:
             print("Please select a start/end node!", startNode, endNode)
     
@@ -395,7 +401,7 @@ class MainWindow(QMainWindow):
         return nodeList
     
     #dijkstra algorithm for GUI
-    def dijkstraAlgorithm(self, startNode, endNode, matrix, DIRECTION, SPEED):
+    def DijkstraAlgorithm(self, startNode, endNode, matrix, DIRECTION, SPEED):
         vSet = [] #visited nodes
         uSet = matrix #unvisted nodes
 
@@ -408,31 +414,29 @@ class MainWindow(QMainWindow):
             #mark every neighbor as visited
             for node in neighborNodes:
                 node.isVisisted = True
-                #time.sleep(0.1)
-                node.repaint()
                 tentativeCost = currentNode.distance + node.MoveCost()
                 if node in vSet or node.isWall == True:
                     continue
                 else:
                     if tentativeCost < node.distance:
                         node.distance = tentativeCost
-                        node.parent = currentNode
+                        node.Parent = currentNode
                         for i in uSet:
                             if i.point == node.point:
                                 i = node
+                node.update()
             vSet.append(currentNode)
             lowestCostNode = min(uSet, key=attrgetter("distance"))
             currentNode = lowestCostNode
-            #print("LOWEST COST NODE: ", currentNode.point)
             uSet.remove(currentNode)
             
         #now that algo finished -> go through the node parents of the end node to find the path
         count = 0
         #we have to create a list (from start to end) to properly draw everything
         fixedList = []
-        while currentNode.parent:
+        while currentNode.Parent:
             fixedList.append(currentNode)
-            currentNode = currentNode.parent
+            currentNode = currentNode.Parent
 
         for currentNode in fixedList[::-1]:
             currentNode.isVisisted = False
@@ -445,7 +449,6 @@ class MainWindow(QMainWindow):
             print("Path to final node: ", currentNode.point)
             #update the color of the node to represent the walked path
             self.listWidget.insertItem(count, str(currentNode.point))
-            #currentNode = currentNode.parent
             count += 1
     
     #this function is called by both algos in order to get the necessary data (start, end, matrix, direction)
@@ -482,7 +485,6 @@ class MainWindow(QMainWindow):
         cost = currentNode.cost
         return cost * (dx+dy)
 
-    #run when astar button is clicked
     def aSearchClicked(self, checked):
         print("Beginning A* search...")
         startNode, endNode, matrix, DIRECTION, SPEED = self.GetAlgoInfo()
@@ -508,7 +510,6 @@ class MainWindow(QMainWindow):
         else:
             print("Please select a start/end node!", startNode, endNode)
     
-    #astar algorithm for GUI
     def astarAlgorithm(self, startNode, endNode, matrix, DIRECTION, SPEED):
         openSet = [startNode]
         closedSet = []
@@ -520,9 +521,9 @@ class MainWindow(QMainWindow):
             time.sleep(SPEED)
             if currentNode == endNode:
                 finalPath = []
-                while currentNode.parent:
-                    finalPath.append(currentNode.parent)
-                    currentNode = currentNode.parent
+                while currentNode.Parent:
+                    finalPath.append(currentNode.Parent)
+                    currentNode = currentNode.Parent
                 finalPath.append(currentNode)
                 return finalPath[::-1]
             
@@ -538,11 +539,11 @@ class MainWindow(QMainWindow):
                     newG = currentNode.G + currentNode.MoveCost()
                     if node.G > newG:
                         node.G = newG
-                        node.parent = currentNode
+                        node.Parent = currentNode
                 else:
                     node.G = currentNode.G + currentNode.MoveCost()
                     node.H = self.ManhattanDistance(node, endNode)
-                    node.parent = currentNode
+                    node.Parent = currentNode
                     openSet.append(node)
 
 #app starts here
