@@ -3,5 +3,7 @@
 	"WindowIcon": "images/blocks.png",
 	"Height": "900",
 	"Width": "900",
+	"GridHeight": "800",
+	"GridWidth": "800",
 	"StyleSheet": "stylesheets/forms.css"
 }
