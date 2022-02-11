@@ -1,5 +1,5 @@
 <b>Astar and Dijkstra pathfinding algorithms written natively in python3 + PyQt5.</b>
-![Alt Text](https://github.com/henryriveraCS/path-finder/blob/master/astar.gif)
+![GIF of the astar algorithm running](https://github.com/henryriveraCS/path-finder/blob/master/astar.gif)
 
 <b> HOW TO RUN: </b>
   1. <code>git clone</code> this repo
