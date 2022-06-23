@@ -3,20 +3,30 @@
 <img src="https://raw.githubusercontent.com/henryriveraCS/path-finder/master/images/blocks.png" width="200">
 
 
-Pathfinding algorithms visualized in PyQt5 with a 2D/~~3D~~(soon) interface. Set starting points, end points, timers and more.
+Pathfinding algorithms visualized in python3 with a 2D/~~3D(soon)~~ GUI interface. 
 
-<b>To Do:</b>
-  1. 2D Astar Algorithm
-  2. 2D Djikstra Algorithm
-  3. 3D Astar Algorithm
-  4. 3D Djikstra Algorithm
+<h2>FEATURES</h2>
 
-<b> HOW TO RUN:</b>
+1. Set starting/end points
+2. Set wall points (algorithm will work around these nodes)
+3. Dynamically resize the grid
+4. Step-in feature to visualize how the algorithm moves each cycle
+
+
+<h2>TO DO</h2>
+
+- Re-design PyQt5 widget classes to be more modular <-- currently here
+- Re-implement 2D Astar Algorithm
+- Re-implement 2D Djikstra Algorithm
+- Implement 3D Astar Algorithm
+- Implement 3D Djikstra Algorithm
+
+<h2> HOW TO RUN</h2>
 
 ```bash
 git clone https://github.com/henryriveraCS/path-finder
 cd path-finder/
-python3 -m virtualenv ./
+python3 -m venv ./
 pip3 install -r requirements.txt
 python3 path-finder/app.py
 ```
