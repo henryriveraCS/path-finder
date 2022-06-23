@@ -139,7 +139,7 @@ class GridForm(QWidget):
         self.setLayout(self.form_layout)
 
     def on_algo_valueChanged(self, selected_algorithm: int):
-        for algo in 
+        pass
 
 
 class GridWidget(QWidget, xy.Grid):
