@@ -1,13 +1,22 @@
-<b>Astar and Dijkstra pathfinding algorithms written natively in python3 + PyQt5.</b>
-![GIF of the astar algorithm running](https://github.com/henryriveraCS/path-finder/blob/master/astar.gif)
+<h1>2D/3D Path Finder</h1>
 
-<b> HOW TO RUN: </b>
-  1. <code>git clone</code> this repo
-  2. <code> pip3 install -r requirements.txt</code> to install the PyQt5 modules
-  3. <code>python3 app.py</code> to open the GUI
+<img src="https://raw.githubusercontent.com/henryriveraCS/path-finder/master/images/blocks.png" width="200">
 
 
-Grid Controls:<br/>
-Left Click: sets the start node<br/>
-Right Click: sets the end node<br/>
-Middle Click: sets a wall node<br/>
+Pathfinding algorithms visualized in PyQt5 with a 2D/~~3D~~(soon) interface. Set starting points, end points, timers and more.
+
+<b>To Do:</b>
+  1. 2D Astar Algorithm
+  2. 2D Djikstra Algorithm
+  3. 3D Astar Algorithm
+  4. 3D Djikstra Algorithm
+
+<b> HOW TO RUN:</b>
+
+```bash
+git clone https://github.com/henryriveraCS/path-finder
+cd path-finder/
+python3 -m virtualenv ./
+pip3 install -r requirements.txt
+python3 path-finder/app.py
+```
