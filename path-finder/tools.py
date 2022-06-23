@@ -15,7 +15,7 @@ class Colors:
     dark_green = Qt.darkGreen
     dark_blue = Qt.darkBlue
     dark_magenta = Qt.darkMagenta
-    
+
 
 class OSInterface:
     def __init__(self):
@@ -45,12 +45,12 @@ class OSInterface:
 
     def GetWidth(self):
         return self.width
-    
+
     def GetTitle(self):
         return self.appTitle
 
     def GetGridHeight(self):
         return self.gridHeight
-    
+
     def GetGridWidth(self):
         return self.gridWidth

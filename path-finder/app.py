@@ -1,4 +1,3 @@
-import importlib
 import sys
 
 from PyQt5.QtWidgets import (
@@ -12,20 +11,7 @@ from PyQt5.QtCore import QSize, Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QIcon, QPixmap
 
 from tools import OSInterface
-
-"""
-class MainWindowForm(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.form_layout = QFormLayout()
-        self.form_layout.addRow("Cost: ", QLineEdit())
-        self.form_layout.addRow("Distance: ", QLineEdit())
-
-        self.submit_button = QPushButton("OK")
-
-        self.setLayout(self.form_layout)
-"""
-
+from metadata import Modes
 
 class MainWindowMenu(QWidget):
     selected_mode = pyqtSignal(int)
@@ -74,16 +60,13 @@ class MainWindowMenu(QWidget):
         for mode in modes:
             if mode.get("index") == selected_mode:
                 self.parent.on_update_mode(mode)
-        #self.parent.on_update_mode(selected_mode)
 
         
 class MainWindow(QMainWindow):
-    def __init__(self, osi, modes):
+    def __init__(self, osi):
         super().__init__()
-        self.modes = modes
-        self.mode = None
         self.osi = osi
-        self.mode = 0
+        self.mode = [None]
         #set window icons/logos
         self.setWindowTitle(self.osi.GetTitle())
         self.setMinimumSize(QSize(self.osi.GetHeight(), self.osi.GetWidth()))
@@ -95,7 +78,7 @@ class MainWindow(QMainWindow):
 
         #set empty widget
         self.widget = QWidget()
-        self.on_update_mode(self.modes[0])
+        self.on_update_mode(modes[0])
 
         #self.main_layout.addWidget(self.form_layout)
 
@@ -119,16 +102,8 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     osi = OSInterface()
     app.setWindowIcon(QIcon(osi.GetWindowsIcon()))
-
     #loading up instances of empty widgets to initialize when user select a mode
-    empty_grid_class = getattr(importlib.import_module("widgets.empty_widget"), "EmptyWidget")
-    xy_window_class = getattr(importlib.import_module("widgets.xy_grid"), "XYWindow")
-
-    modes = [
-        {"active": False, "index": 0, "name": "None Selected", "widget": empty_grid_class},
-        {"active": True, "index": 1, "name": "2D Pathfinder", "widget": xy_window_class},
-        {"active": True, "index": 2, "name": "3D Pathfinder"}
-    ]
-    window = MainWindow(osi, modes)
+    modes = Modes().modes
+    window = MainWindow(osi)
     window.show()
     sys.exit(app.exec())

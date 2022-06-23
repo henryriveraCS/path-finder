@@ -1,9 +1,10 @@
 import math
 
 class Node:
+    """ Base logic for Node """
     def __init__(self, point: (int, int)):
         self.point = point
-        self.parent = None
+        self.node_parent = None
         self.cost = 1
         self.is_wall = False
         self.G = 0
@@ -20,6 +21,7 @@ class Node:
         return self.cost
 
 class Grid:
+    """ Base class for Grid logic """
     def __init__(self):
         self.matrix = []
         self.direction = 4 #set to 8 to allow for diagnoal movement
@@ -120,10 +122,10 @@ class Grid:
         self.current_node = min(self.open_set, key=lambda node: node.G + node.H)
         self.current_node.is_visited = True
         if self.current_node == self.end_node:
-            while self.current_node.parent:
-                self.final_path.append(self.current_node.parent)
+            while self.current_node.node_parent:
+                self.final_path.append(self.current_node.node_parent)
                 self.current_node.is_path = True
-                self.current_node = self.current_node.parent
+                self.current_node = self.current_node.node_parent
             self.final_path.append(self.current_node)
             #reverse list so it starts from start_node.point
             self.final_path = self.final_path[::-1]
@@ -145,9 +147,9 @@ class Grid:
                 newG = self.current_node.G + self.current_node.MoveCost()
                 if node.G > newG:
                     node.G = newG
-                    node.parent = self.current_node
+                    node.node_parent = self.current_node
             else:
                 node.G = self.current_node.G + self.current_node.MoveCost()
                 node.H = self.manhattan_distance(node, self.end_node)
-                node.parent = self.current_node
+                node.node_parent = self.current_node
                 self.open_set.append(node)
