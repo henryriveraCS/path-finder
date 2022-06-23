@@ -1,8 +1,8 @@
 {
 	"AppTitle": "Path Finder App",
 	"WindowIcon": "images/blocks.png",
-	"Height": "900",
-	"Width": "900",
+	"Height": "600",
+	"Width": "600",
 	"GridHeight": "600",
 	"GridWidth": "600",
 	"StyleSheet": "stylesheets/forms.css"
