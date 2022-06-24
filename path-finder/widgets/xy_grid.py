@@ -1,17 +1,17 @@
 import sys
+import time
 
 from PyQt5.QtWidgets import (
         QApplication, QMainWindow, QWidget,
         QGridLayout, QFormLayout, QLineEdit,
         QVBoxLayout, QHBoxLayout, QPushButton,
-        QLabel, QComboBox, QMessageBox
-
+        QLabel, QComboBox, QMessageBox, QGridLayout
         )
 from PyQt5.QtCore import QSize, Qt, pyqtSlot, pyqtSignal
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtGui import QIcon, QPixmap, QPainter, QBrush, QFont
 
 from tools import Colors
-from algorithms import grid_logic
+from algorithms import logic
 
 
 algorithm_box_data = [
@@ -21,11 +21,11 @@ algorithm_box_data = [
 ]
 
 time_box_data = [
-    {"index": 0, "name": "Instant", "active": False},
-    {"index": 1, "name": "1 step per second", "active": True},
-    {"index": 2, "name": "2 step per second", "active": True},
-    {"index": 3, "name": "3 step per second", "active": True},
-    {"index": 4, "name": "4 step per second", "active": True}
+    {"index": 0, "name": "Instant", "active": False, "timer": 0},
+    {"index": 1, "name": "1 step per second", "active": True, "timer": 1},
+    {"index": 2, "name": "2 step per second", "active": True, "timer": 2},
+    {"index": 3, "name": "3 step per second", "active": True, "timer": 3},
+    {"index": 4, "name": "4 step per second", "active": True, "timer": 4}
 ]
 
 direction_box_data = [
@@ -35,26 +35,37 @@ direction_box_data = [
 ]
 
 
-class NodeWidget(QWidget, grid_logic.Node):
-    def __init__(self, parent, point, pos_x, pos_y, height, width):
-        super(Node, self).__init__(parent, point, pos_x, pos_y, height, width)
-        self.parent = parent
+class NodeWidget(QWidget, logic.Node):
+    def __init__(self, parent):
+        super().__init__(parent)
         #qt metadata
+        self.parent = parent
         self.background_color = Colors.white
         self.wall_color = Colors.blue
         self.start_color = Colors.dark_green
         self.path_color = Colors.dark_yellow
         self.goal_color = Colors.dark_red
         self.visited_color = Colors.dark_cyan
-        self.height = height
-        self.width = width
-        self.pos_x = pos_x
-        self.pos_y = pos_y
+        
+        self.point_label = QLabel()
+        self.point_label.setText(str(self.point))
+
+        self.main_layout = QVBoxLayout()
+        self.main_layout.addWidget(self.point_label)
+        self.setLayout(self.main_layout)
+
+    def update_point_label(self) -> None:
+        self.point_label.setText(str(self.point))
+        font = QFont()
+        self.point_label.setFont(font)
+        self.point_label.setStyleSheet("color:black;")
+        #font.setPointSize(7
+
 
     def paintEvent(self, parent):
         qp = QPainter()
-        qp.being(self)
-        #qp.setRenderHints(qp.Antialiasing)
+        qp.begin(self)
+        qp.setRenderHints(qp.Antialiasing)
         if self.is_wall:
             brush = QBrush(self.wall_color)
             qp.setBrush(brush)
@@ -74,17 +85,16 @@ class NodeWidget(QWidget, grid_logic.Node):
             brush = QBrush(self.background_color)
             qp.setBrush(brush)
 
-        qp.drawRect(0, 0, self.width, self.height)
+        qp.drawRect(0, 0, self.width(), self.height())
+        #self.setStyleSheet("margin:5px; border:1px solid rgb(0, 255, 0); ")
         #qp.drawText(0, 0, str(self.point))
         qp.end()
 
-    def move_cost(self):
-        return self.cost
-
 
 class GridForm(QWidget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
         self.form_layout = QFormLayout()
         self.selected_algorithm = None
         self.selected_direction = None
@@ -164,12 +174,16 @@ class GridForm(QWidget):
 
     @pyqtSlot(int)
     def on_direction_valueChanged(self, selected_direction: int) -> None:
-        self.selected_direction = selected_direction
+        for direction in direction_box_data:
+            if selected_direction == direction.get("index"):
+                self.selected_direction = direction.get("direction")
 
 
     @pyqtSlot(int)
     def on_time_valueChanged(self, selected_time: int) -> None:
-        self.selected_time = selected_time
+        for time in time_box_data:
+            if selected_time == time.get("index"):
+                self.selected_time = time.get("timer")
 
     
     @pyqtSlot()
@@ -197,7 +211,14 @@ class GridForm(QWidget):
             and selected_rows_is_valid
             and selected_cols_is_valid
         ):
-            print("set properly")
+            params = {
+                "rows": self.rows,
+                "cols": self.cols,
+                "timer": self.selected_time,
+                "direction": self.selected_direction,
+                "algorithm": self.selected_algorithm
+            }
+            self.parent.on_valid_menu(params)
         else:
             missing_items = []
             if not selected_algorithm_is_valid:
@@ -218,17 +239,27 @@ class GridForm(QWidget):
             msg_box.exec_()
 
 
-class GridWidget(QWidget, grid_logic.Grid):
-    def __init__(self):
-        super().__init__()
-        # Grid logic
-        self.label = QLabel()
-        self.label.setText("HELLO FROM XYGRID")
-
+class GridWidget(QWidget, logic.Grid):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
         #pyQT metadata
+        self.grid_layout = QGridLayout()
         self.main_layout = QVBoxLayout()
-        self.main_layout.addWidget(self.label)
+        self.main_layout.addLayout(self.grid_layout)
         self.setLayout(self.main_layout)
+
+    def load_nodes(self) -> None:
+        """ Iteratively loads nodes set in self.matrix. """
+        #rows = range(self.rows)
+        #cols = range(self.cols)
+
+        for node in self.matrix:
+            col, row = node.get_x(), node.get_y()
+            node_widget = NodeWidget(parent=self)
+            node_widget.set_point(row, col)
+            node_widget.update_point_label()
+            self.grid_layout.addWidget(node_widget, col, row)
 
 
     def get_node_size(self) -> tuple[int, int]:
@@ -236,16 +267,7 @@ class GridWidget(QWidget, grid_logic.Grid):
         node_height = self.height//self.cols
         node_width = self.width//self.rows
         return node_height, node_width
-
-
-    def create_nodes(self, node, pos_x, pos_y):
-        """ Creates node widget and adds them dynamically """
-        pass
-
-
-    def on_update_algo(self, selected_algo: dict):
-        """ Called when selected search algorithm is updated in GridForm. """
-
+    
 
 class XYWindow(QWidget):
     def __init__(self, parent):
@@ -253,9 +275,23 @@ class XYWindow(QWidget):
         #pyQT metadata
         self.parent = parent
         self.main_layout = QHBoxLayout()
-        self.grid_widget = GridWidget()
-        self.grid_form = GridForm()
+        self.grid_widget = GridWidget(parent=self)
+        self.grid_form = GridForm(self)
 
         self.main_layout.addWidget(self.grid_form)
         self.main_layout.addWidget(self.grid_widget)
         self.setLayout(self.main_layout)
+
+
+    def on_valid_menu(self, params: dict) -> None:
+        #begin loading the grid with the validated parameters
+        rows = params.get("rows")
+        cols = params.get("cols")
+        algo = params.get("algorithm")
+        timer = params.get("timer")
+        self.grid_widget.set_x(rows)
+        self.grid_widget.set_y(cols)
+        #load matrix first
+        self.grid_widget.load_matrix()
+        #load nodeWidgets to match with matrix
+        self.grid_widget.load_nodes()

@@ -2,8 +2,8 @@ import math
 
 class Node:
     """ Base logic for Node """
-    def __init__(self, point: (int, int)):
-        self.point = point
+    def __init__(self):
+        self.point = (0, 0)
         self.node_parent = None
         self.cost = 1
         self.is_wall = False
@@ -16,8 +16,18 @@ class Node:
         self.is_visited = False
         self.is_path = False
 
+    def set_point(self, x: int, y: int) -> None:
+        self.point = (x,y)
 
-    def MoveCost(self):
+    def get_x(self) -> int:
+        return self.point[0]
+
+    
+    def get_y(self) -> int:
+        return self.point[1]
+
+
+    def move_cost(self) -> int:
         return self.cost
 
 class Grid:
@@ -68,11 +78,13 @@ class Grid:
 
 
     
-    def load(self) -> None:
+    def load_matrix(self) -> None:
         self.matrix = []
         for x in self.x_range:
             for y in self.y_range:
-                self.matrix.append(Node((x,y)))
+                node = Node()
+                node.set_point(x, y)
+                self.matrix.append(node)
 
 
     def set_x(self, x: int) -> None:
@@ -111,12 +123,11 @@ class Grid:
             Call this function in a loop in order to iteratively take a step through the Astar
             algorithm.
             E.G:
-            self.current_node = None
+            self.matrix = [(0,0), (0,1), (0,2), (0,3), etc]
             self.start_node = (0,0)
             self.end_node = (0,3)
-            matrix = [(0,0), (0,1), (0,2), (0,3), etc]
-            while start_node != end_node:
-                current_node = AstarStep(start_node, end_node, matrix)
+            while self.is_solved is False:
+                self.astar_step()
         """
         #self.open_set.append(start_node)
         self.current_node = min(self.open_set, key=lambda node: node.G + node.H)
@@ -144,12 +155,12 @@ class Grid:
             if node in self.closed_set or node.is_wall is True:
                 continue
             if node in self.open_set:
-                newG = self.current_node.G + self.current_node.MoveCost()
+                newG = self.current_node.G + self.current_node.move_cost()
                 if node.G > newG:
                     node.G = newG
                     node.node_parent = self.current_node
             else:
-                node.G = self.current_node.G + self.current_node.MoveCost()
+                node.G = self.current_node.G + self.current_node.move_cost()
                 node.H = self.manhattan_distance(node, self.end_node)
                 node.node_parent = self.current_node
                 self.open_set.append(node)

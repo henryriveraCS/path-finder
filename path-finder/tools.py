@@ -11,9 +11,11 @@ class Colors:
     green = Qt.green
     magenta = Qt.magenta
     cyan = Qt.cyan
+    dark_cyan = Qt.darkCyan
     dark_yellow = Qt.darkYellow
     dark_green = Qt.darkGreen
     dark_blue = Qt.darkBlue
+    dark_red = Qt.darkRed
     dark_magenta = Qt.darkMagenta
 
 
