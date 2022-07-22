@@ -7,7 +7,8 @@ from PyQt5.QtWidgets import (
         QVBoxLayout, QHBoxLayout, QPushButton,
         QLabel, QComboBox, QMessageBox, QGridLayout
         )
-from PyQt5.QtCore import QSize, Qt, pyqtSlot, pyqtSignal
+
+from PyQt5.QtCore import QSize, Qt, pyqtSlot, pyqtSignal, QEvent
 from PyQt5.QtGui import QIcon, QPixmap, QPainter, QBrush, QFont
 
 from tools import Colors
@@ -91,6 +92,19 @@ class NodeWidget(QWidget, logic.Node):
         qp.end()
 
 
+    def mousePressEvent(self, event: QEvent):
+        if event.button() == Qt.LeftButton:
+            print("Left button pressed ", self.point)
+        elif event.button() == Qt.RightButton:
+            print("Right button pressed")
+
+    """
+    def mouse_press_event(self, event: QEvent) -> None:
+        #notify the grid that this node was pressed
+        if event.button() == Qt.LeftButton:
+            self.se
+    """
+
 class GridForm(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
@@ -99,7 +113,6 @@ class GridForm(QWidget):
         self.selected_algorithm = None
         self.selected_direction = None
         self.selected_time = None
-
         
         self.title_label = QLabel()
         self.title_label.setText("2D Search Menu")
