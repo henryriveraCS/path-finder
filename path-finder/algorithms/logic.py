@@ -19,6 +19,7 @@ class Node:
     def set_point(self, x: int, y: int) -> None:
         self.point = (x,y)
 
+
     def get_x(self) -> int:
         return self.point[0]
 
@@ -29,6 +30,14 @@ class Node:
 
     def move_cost(self) -> int:
         return self.cost
+
+
+    def clear(self) -> None:
+        self.is_start = False
+        self.is_end = False
+        self.is_wall = False
+        self.is_visited = False
+        self.is_path = False
 
 class Grid:
     """ Base class for Grid logic """
@@ -100,12 +109,15 @@ class Grid:
     def set_wall_node(self, wall_node: Node) -> None:
         for node in self.matrix:
             if node == wall_node:
+                end_node.clear()
                 wall_node.is_wall = True
 
     
     def set_end_node(self, end_node: Node) -> None: 
         for node in self.matrix:
             if node == end_node:
+                self.end_node.clear()
+                end_node.clear()
                 self.end_node = end_node
                 self.end_node.is_end = True
 
@@ -113,9 +125,17 @@ class Grid:
     def set_start_node(self, start_node: Node) -> None:
         for node in self.matrix:
             if node == start_node:
+                self.start_node.clear()
+                start_node.clear()
                 self.start_node = start_node
                 self.start_node.is_start = True
                 self.open_set = [self.start_node]
+
+
+    """
+    def set_visited_node(self, visited_node: Node) -> None:
+        for node in self.matrix:
+    """
 
 
     def astar_step(self) -> None:
