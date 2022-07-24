@@ -64,6 +64,7 @@ class NodeWidget(QWidget, logic.Node):
 
 
     def paintEvent(self, parent):
+        #self.setStyleSheet("border:1px solid rgb(0, 255, 255); ")
         qp = QPainter()
         qp.begin(self)
         qp.setRenderHints(qp.Antialiasing)
@@ -262,11 +263,24 @@ class GridWidget(QWidget, logic.Grid):
         self.main_layout.addLayout(self.grid_layout)
         self.setLayout(self.main_layout)
 
+
+    def paintEvent(self, parent):
+        qp = QPainter()
+        qp.begin(self)
+        qp.setRenderHints(qp.Antialiasing)
+        brush = QBrush(Colors.white)
+        qp.setBrush(brush)
+
+        qp.drawRect(0, 0, self.width(), self.height())
+        #self.setStyleSheet("margin:5px; border:1px solid rgb(0, 255, 0); ")
+        #qp.drawText(0, 0, str(self.point))
+        qp.end()
+
+
+
+
     def load_nodes(self) -> None:
         """ Iteratively loads nodes set in self.matrix. """
-        #rows = range(self.rows)
-        #cols = range(self.cols)
-
         for node in self.matrix:
             col, row = node.get_x(), node.get_y()
             node_widget = NodeWidget(parent=self)
@@ -287,14 +301,15 @@ class XYWindow(QWidget):
         super().__init__(parent)
         #pyQT metadata
         self.parent = parent
+        #self.empty_widget = QWidget(self)
+        #self.empty_widget.setCentralWidget(self.empty_widget)
         self.main_layout = QHBoxLayout()
-        self.grid_widget = GridWidget(parent=self)
         self.grid_form = GridForm(self)
+        #load grid
+        self.grid_widget = GridWidget(parent=self)
+        self.refresh_grid(rows=5, cols=5)
 
-        self.main_layout.addWidget(self.grid_form)
-        self.main_layout.addWidget(self.grid_widget)
-        self.setLayout(self.main_layout)
-
+        self.update_layout()
 
     def on_valid_menu(self, params: dict) -> None:
         #begin loading the grid with the validated parameters
@@ -302,9 +317,39 @@ class XYWindow(QWidget):
         cols = params.get("cols")
         algo = params.get("algorithm")
         timer = params.get("timer")
+
+        self.refresh_grid(rows=rows, cols=cols)
+        #self.update_layout()
+
+    def update_layout(self) -> None:
+        """ Reloads entire layout. """
+        #self.main_layout.parent = None
+        self.main_layout.deleteLater()
+        self.main_layout = QHBoxLayout()
+        self.setLayout(self.main_layout)
+        self.main_layout.addWidget(self.grid_form)
+        self.main_layout.addWidget(self.grid_widget)
+        self.setLayout(self.main_layout)
+
+
+    def create_grid(self, rows: int, cols: int) -> None:
+        """ Creates new grid node matrix. """
+        self.grid_widget = GridWidget(parent=self)
         self.grid_widget.set_x(rows)
         self.grid_widget.set_y(cols)
-        #load matrix first
+
+
+    def load_grid(self) -> None:
+        """ Loads new grid node matrix. """
         self.grid_widget.load_matrix()
-        #load nodeWidgets to match with matrix
         self.grid_widget.load_nodes()
+
+        #self.main_layout.addWidget(self.grid_widget)
+
+    def refresh_grid(self, rows: int, cols: int) -> None:
+        """ Deletes old grid and places new one with updated matrix. """
+        self.main_layout.removeWidget(self.grid_widget)
+        self.create_grid(rows=rows, cols=cols)
+        self.load_grid()
+        self.main_layout.addWidget(self.grid_widget)
+        self.update()
