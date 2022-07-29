@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (
         QFrame
         )
 
-from PyQt5.QtCore import QSize, Qt, pyqtSlot, pyqtSignal, QEvent
+from PyQt5.QtCore import QSize, Qt, pyqtSlot, pyqtSignal, QEvent, QRectF
 from PyQt5.QtGui import QIcon, QPixmap, QPainter, QBrush, QFont
 
 from tools import Colors
@@ -44,17 +44,18 @@ class NodeWidget(QWidget, logic.Node):
         self.parent = parent
         self.setContentsMargins(0, 0, 0, 0)
         self.background_color = Colors.white
+        self.wall_border_color = Colors.black
         self.wall_color = Colors.blue
         self.start_color = Colors.dark_green
         self.path_color = Colors.dark_yellow
-        self.goal_color = Colors.dark_red
+        self.end_color = Colors.dark_red
         self.visited_color = Colors.dark_cyan
         
         self.font_size = 15
         self.font_type = "Arial"
         self.font_style = QFont(self.font_type, self.font_size)
         self.point_label = QLabel()
-        self.point_label.setStyleSheet("color:black;")
+        self.point_label.setStyleSheet("color:black; border:1px solid black;")
 
         self.main_layout = QVBoxLayout()
         self.main_layout.addWidget(self.point_label)
@@ -70,9 +71,8 @@ class NodeWidget(QWidget, logic.Node):
         self.update_point_label()
 
 
-    def paintEvent(self, parent):
-        self.setStyleSheet("background-color: rgb(255,255,255); border:1px solid rgb(0, 0, 0); ")
-        #self.setStyleSheet("border:1px solid rgb(0, 255, 255); ")
+    def paintEvent(self, parent) -> None:
+        #self.setStyleSheet("background-color: rgb(255,255,255); border:1px solid rgb(0, 0, 0); ")
         qp = QPainter()
         qp.begin(self)
         qp.setRenderHints(qp.Antialiasing)
@@ -94,23 +94,19 @@ class NodeWidget(QWidget, logic.Node):
         else:
             brush = QBrush(self.background_color)
             qp.setBrush(brush)
-
         qp.drawRect(0, 0, self.width(), self.height())
         qp.end()
 
 
-    def mousePressEvent(self, event: QEvent):
+    def mousePressEvent(self, event: QEvent) -> None:
         if event.button() == Qt.LeftButton:
-            print("Left button pressed ", self.point)
+            print("Start node pressed: ", self.point)
+            self.parent.set_start_node(self)
         elif event.button() == Qt.RightButton:
-            print("Right button pressed ", self.point)
+            print("End node press:  ", self.point)
+            self.parent.set_end_node(self)
+        self.parent.refresh_nodes()
 
-    """
-    def mouse_press_event(self, event: QEvent) -> None:
-        #notify the grid that this node was pressed
-        if event.button() == Qt.LeftButton:
-            self.se
-    """
 
 class GridForm(QWidget):
     def __init__(self, parent):
@@ -265,12 +261,15 @@ class GridWidget(QWidget, logic.Grid):
         self.parent = parent
         #pyQT metadata
         self.grid_layout = QGridLayout()
+        self.grid_layout.setSpacing(0)
         self.grid_layout.setContentsMargins(0, 0, 0, 0)
-        #self.qFrame = QFrame(QFrame.NoFrame)
-        self.setStyleSheet("padding:0px;")
-        #self.grid_layout.setFrameStyle(QFrame.NoFrame)
+        self.grid_layout.setHorizontalSpacing(0)
+        self.grid_layout.setVerticalSpacing(0)
+        self.setStyleSheet("margin:0px; padding:0px;")
 
         self.main_layout = QVBoxLayout()
+        self.main_layout.setSpacing(0)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.addLayout(self.grid_layout)
         self.setLayout(self.main_layout)
 
@@ -283,12 +282,13 @@ class GridWidget(QWidget, logic.Grid):
         qp.setBrush(brush)
 
         qp.drawRect(0, 0, self.width(), self.height())
-        #self.setStyleSheet("margin:5px; border:1px solid rgb(0, 255, 0); ")
-        #qp.drawText(0, 0, str(self.point))
         qp.end()
 
-
-
+    def refresh_nodes(self) -> None:
+        """ Redraws every node in the grid. """
+        self.all_node_widgets = (self.grid_layout.itemAt(i) for i in range(self.grid_layout.count()))
+        for node_widget in self.all_node_widgets:
+            node_widget.widget().update()
 
     def load_nodes(self) -> None:
         """ Iteratively loads nodes set in self.matrix. """
@@ -298,6 +298,8 @@ class GridWidget(QWidget, logic.Grid):
             node_widget.set_point(row, col)
             node_widget.update_point_label()
             self.grid_layout.addWidget(node_widget, col, row)
+
+        #load a list of all widgets in the grid for future use (refreshing all nodes)
 
 
     def get_node_size(self) -> tuple[int, int]:

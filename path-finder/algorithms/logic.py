@@ -39,6 +39,7 @@ class Node:
         self.is_visited = False
         self.is_path = False
 
+
 class Grid:
     """ Base class for Grid logic """
     def __init__(self):
@@ -85,7 +86,6 @@ class Grid:
         cost = current_node.cost
         return cost * (dx+dy)
 
-
     
     def load_matrix(self) -> None:
         self.matrix = []
@@ -114,20 +114,24 @@ class Grid:
 
     
     def set_end_node(self, end_node: Node) -> None: 
+        if self.end_node is not None:
+            self.end_node.clear()
         for node in self.matrix:
-            if node == end_node:
-                self.end_node.clear()
-                end_node.clear()
+            if node.point == end_node.point:
+                node.clear()
                 self.end_node = end_node
+                end_node.clear()
                 self.end_node.is_end = True
 
 
     def set_start_node(self, start_node: Node) -> None:
+        if self.start_node is not None:
+            self.start_node.clear()
         for node in self.matrix:
-            if node == start_node:
-                self.start_node.clear()
-                start_node.clear()
+            if node.point == start_node.point:
+                node.clear()
                 self.start_node = start_node
+                self.start_node.clear()
                 self.start_node.is_start = True
                 self.open_set = [self.start_node]
 
