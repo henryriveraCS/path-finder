@@ -134,27 +134,20 @@ class Grid:
                 self.start_node.clear()
                 self.start_node.is_start = True
                 self.open_set = [self.start_node]
+                print("open_set set to: ", self.open_set)
 
     def set_visited_node(self, visited_node: Node) -> None:
         if visited_node in self.matrix:
             visited_node.clear()
-            self.is_visisted()
+            self.is_visited()
+
 
     def astar_step(self) -> None:
-        """
-            Call this function in a loop in order to iteratively take a step through the Astar
-            algorithm.
-            E.G:
-            self.matrix = [(0,0), (0,1), (0,2), (0,3), etc]
-            self.start_node = (0,0)
-            self.end_node = (0,3)
-            while self.is_solved is False:
-                self.astar_step()
-        """
+        """ Take a step using the astar algorithm. """
         #self.open_set.append(start_node)
         self.current_node = min(self.open_set, key=lambda node: node.G + node.H)
         self.current_node.is_visited = True
-        if self.current_node == self.end_node:
+        if self.current_node.point == self.end_node.point:
             while self.current_node.node_parent:
                 self.final_path.append(self.current_node.node_parent)
                 self.current_node.is_path = True

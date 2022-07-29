@@ -329,13 +329,26 @@ class XYWindow(QWidget):
 
 
     def on_valid_menu(self, params: dict) -> None:
+        """ Runs defined search. """
         #begin loading the grid with the validated parameters
         rows = params.get("rows")
         cols = params.get("cols")
         algo = params.get("algorithm")
         timer = params.get("timer")
 
-        self.refresh_grid(rows=rows, cols=cols)
+        solved = self.grid_widget.is_solved
+        #astar algorithm
+        if algo == 1:
+            print("Astar Algorithm running")
+            while solved is not True:
+                self.grid_widget.astar_step()
+                solved = self.grid_widget.is_solved
+                self.grid_widget.refresh_nodes()
+            #algorithm solved
+            print("Final Path:")
+            for node in self.grid_widget.final_path:
+                print(node.point)
+        #self.refresh_grid(rows=rows, cols=cols)
 
 
     def update_layout(self) -> None:
