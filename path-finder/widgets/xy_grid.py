@@ -5,7 +5,8 @@ from PyQt5.QtWidgets import (
         QApplication, QMainWindow, QWidget,
         QGridLayout, QFormLayout, QLineEdit,
         QVBoxLayout, QHBoxLayout, QPushButton,
-        QLabel, QComboBox, QMessageBox, QGridLayout
+        QLabel, QComboBox, QMessageBox, QGridLayout,
+        QFrame
         )
 
 from PyQt5.QtCore import QSize, Qt, pyqtSlot, pyqtSignal, QEvent
@@ -70,6 +71,8 @@ class NodeWidget(QWidget, logic.Node):
 
 
     def paintEvent(self, parent):
+        self.setStyleSheet("background-color: rgb(255,255,255); border:1px solid rgb(0, 0, 0); ")
+        #self.setStyleSheet("border:1px solid rgb(0, 255, 255); ")
         qp = QPainter()
         qp.begin(self)
         qp.setRenderHints(qp.Antialiasing)
@@ -262,15 +265,33 @@ class GridWidget(QWidget, logic.Grid):
         self.parent = parent
         #pyQT metadata
         self.grid_layout = QGridLayout()
+        self.grid_layout.setContentsMargins(0, 0, 0, 0)
+        #self.qFrame = QFrame(QFrame.NoFrame)
+        self.setStyleSheet("padding:0px;")
+        #self.grid_layout.setFrameStyle(QFrame.NoFrame)
+
         self.main_layout = QVBoxLayout()
         self.main_layout.addLayout(self.grid_layout)
         self.setLayout(self.main_layout)
 
+
+    def paintEvent(self, parent):
+        qp = QPainter()
+        qp.begin(self)
+        qp.setRenderHints(qp.Antialiasing)
+        brush = QBrush(Colors.white)
+        qp.setBrush(brush)
+
+        qp.drawRect(0, 0, self.width(), self.height())
+        #self.setStyleSheet("margin:5px; border:1px solid rgb(0, 255, 0); ")
+        #qp.drawText(0, 0, str(self.point))
+        qp.end()
+
+
+
+
     def load_nodes(self) -> None:
         """ Iteratively loads nodes set in self.matrix. """
-        #rows = range(self.rows)
-        #cols = range(self.cols)
-
         for node in self.matrix:
             col, row = node.get_x(), node.get_y()
             node_widget = NodeWidget(parent=self)
@@ -292,14 +313,13 @@ class XYWindow(QWidget):
         #pyQT metadata
         self.parent = parent
         self.main_layout = QHBoxLayout()
-        self.grid_widget = GridWidget(parent=self)
         self.grid_form = GridForm(self)
+        self.grid_widget = GridWidget(parent=self)
 
         self.main_layout.addWidget(self.grid_form)
         self.main_layout.addWidget(self.grid_widget)
         self.setLayout(self.main_layout)
 
-        #load grid menu
         self.grid_widget.set_x(val=5)
         self.grid_widget.set_y(val=5)
         self.grid_widget.load_matrix()
@@ -312,10 +332,37 @@ class XYWindow(QWidget):
         cols = params.get("cols")
         algo = params.get("algorithm")
         timer = params.get("timer")
+
+        self.refresh_grid(rows=rows, cols=cols)
+
+
+    def update_layout(self) -> None:
+        """ Reloads entire layout. """
+        self.main_layout.deleteLater()
+        self.main_layout = QHBoxLayout()
+        self.setLayout(self.main_layout)
+        self.main_layout.addWidget(self.grid_form)
+        self.main_layout.addWidget(self.grid_widget)
+        self.setLayout(self.main_layout)
+
+
+    def create_grid(self, rows: int, cols: int) -> None:
+        """ Creates new grid node matrix. """
+        self.grid_widget = GridWidget(parent=self)
         self.grid_widget.set_x(rows)
         self.grid_widget.set_y(cols)
+
+
+    def load_grid(self) -> None:
+        """ Loads new grid node matrix. """
         self.grid_widget.load_matrix()
         self.grid_widget.load_nodes()
 
-        #start the search here
-        #Grid.astar/etc
+
+    def refresh_grid(self, rows: int, cols: int) -> None:
+        """ Deletes old grid and places new one with updated matrix. """
+        self.main_layout.removeWidget(self.grid_widget)
+        self.create_grid(rows=rows, cols=cols)
+        self.load_grid()
+        self.main_layout.addWidget(self.grid_widget)
+        self.update()
