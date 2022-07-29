@@ -96,13 +96,13 @@ class Grid:
                 self.matrix.append(node)
 
 
-    def set_x(self, x: int) -> None:
-        self.x_range = range(x)
+    def set_x(self, val: int) -> None:
+        self.x_range = range(val+1)
         self.rows = len(self.x_range)
 
 
-    def set_y(self, y: int) -> None:
-        self.y_range = range(y)
+    def set_y(self, val: int) -> None:
+        self.y_range = range(val+1)
         self.cols = len(self.y_range)
 
 
@@ -131,12 +131,10 @@ class Grid:
                 self.start_node.is_start = True
                 self.open_set = [self.start_node]
 
-
-    """
     def set_visited_node(self, visited_node: Node) -> None:
-        for node in self.matrix:
-    """
-
+        if visited_node in self.matrix:
+            visited_node.clear()
+            self.is_visisted()
 
     def astar_step(self) -> None:
         """

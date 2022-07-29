@@ -41,6 +41,7 @@ class NodeWidget(QWidget, logic.Node):
         super().__init__(parent)
         #qt metadata
         self.parent = parent
+        self.setContentsMargins(0, 0, 0, 0)
         self.background_color = Colors.white
         self.wall_color = Colors.blue
         self.start_color = Colors.dark_green
@@ -48,8 +49,11 @@ class NodeWidget(QWidget, logic.Node):
         self.goal_color = Colors.dark_red
         self.visited_color = Colors.dark_cyan
         
+        self.font_size = 15
+        self.font_type = "Arial"
+        self.font_style = QFont(self.font_type, self.font_size)
         self.point_label = QLabel()
-        self.point_label.setText(str(self.point))
+        self.point_label.setStyleSheet("color:black;")
 
         self.main_layout = QVBoxLayout()
         self.main_layout.addWidget(self.point_label)
@@ -57,10 +61,12 @@ class NodeWidget(QWidget, logic.Node):
 
     def update_point_label(self) -> None:
         self.point_label.setText(str(self.point))
-        font = QFont()
-        self.point_label.setFont(font)
-        self.point_label.setStyleSheet("color:black;")
-        #font.setPointSize(7
+        self.point_label.setFont(self.font_style)
+        self.point_label.adjustSize()
+
+    def update_font_size(self, size: int) -> None:
+        self.font_size = size
+        self.update_point_label()
 
 
     def paintEvent(self, parent):
@@ -87,8 +93,6 @@ class NodeWidget(QWidget, logic.Node):
             qp.setBrush(brush)
 
         qp.drawRect(0, 0, self.width(), self.height())
-        #self.setStyleSheet("margin:5px; border:1px solid rgb(0, 255, 0); ")
-        #qp.drawText(0, 0, str(self.point))
         qp.end()
 
 
@@ -96,7 +100,7 @@ class NodeWidget(QWidget, logic.Node):
         if event.button() == Qt.LeftButton:
             print("Left button pressed ", self.point)
         elif event.button() == Qt.RightButton:
-            print("Right button pressed")
+            print("Right button pressed ", self.point)
 
     """
     def mouse_press_event(self, event: QEvent) -> None:
@@ -295,6 +299,12 @@ class XYWindow(QWidget):
         self.main_layout.addWidget(self.grid_widget)
         self.setLayout(self.main_layout)
 
+        #load grid menu
+        self.grid_widget.set_x(val=5)
+        self.grid_widget.set_y(val=5)
+        self.grid_widget.load_matrix()
+        self.grid_widget.load_nodes()
+
 
     def on_valid_menu(self, params: dict) -> None:
         #begin loading the grid with the validated parameters
@@ -304,7 +314,8 @@ class XYWindow(QWidget):
         timer = params.get("timer")
         self.grid_widget.set_x(rows)
         self.grid_widget.set_y(cols)
-        #load matrix first
         self.grid_widget.load_matrix()
-        #load nodeWidgets to match with matrix
         self.grid_widget.load_nodes()
+
+        #start the search here
+        #Grid.astar/etc
