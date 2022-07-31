@@ -314,11 +314,7 @@ class GridWidget(QWidget, logic.Grid):
 
 class Worker(QThread):
     """ Worker object to run while loop to prevent GUI from freezing. """
-    #progress = pyqtSignal(int)
     gui_update = pyqtSignal()
-    #finish = pyqtSignal(bool)
-    ex = pyqtSignal()
-
     def __init__(self, grid_widget, *kwargs):
         super().__init__()
         self.grid_widget = grid_widget
@@ -334,22 +330,12 @@ class Worker(QThread):
             # djikstra algorithm
             elif self.grid_widget.algo == 2:
                 pass
-            print("sleep")
             if self.grid_widget.timer is not None:
                 self.grid_widget.refresh_grid()
-                #self.grid_widget.repaint()
-                #self.grid_widget.update()
-
-                #self.progress.emit()
                 self.gui_update.emit()
                 time.sleep(self.grid_widget.timer)
-            self.grid_widget.grid_widget.refresh_nodes()
 
-        for node in self.grid_widget.grid_widget.final_path:
-            print(node.point, node.is_visited, node.is_start, node.is_end, node.is_wall)
-
-        #self.finish.emit(True)
-        self.ex.emit()
+        self.grid_widget.update()
 
 
 class XYWindow(QWidget):
@@ -373,7 +359,6 @@ class XYWindow(QWidget):
         self.load_grid()
 
 
-
     def on_valid_menu(self, params: dict) -> None:
         """ Runs the selected algorithm with selected options. """
         self.rows = params.get("rows")
@@ -382,21 +367,8 @@ class XYWindow(QWidget):
         self.timer = params.get("timer")
         # making thread to prevent freezing UI while looping
         self.thread = Worker(self, self.grid_widget)
-        #self.parent.processEvents()
         self.parent.app.processEvents()
         self.thread.start()
-        """
-        self.q_thread = QThread()
-        self.worker = Worker(self)
-        self.worker.moveToThread(self.q_thread)
-        self.q_thread.started.connect(self.worker.run)
-        self.worker.finished.connect(self.q_thread.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
-        self.q_thread.finished.connect(self.q_thread.deleteLater)
-        #self.worker.progress.connect(self.reportProgress)
-        self.q_thread.start()
-        """
-
 
     def update_layout(self) -> None:
         """ Reloads entire layout. """
@@ -406,10 +378,6 @@ class XYWindow(QWidget):
         self.main_layout.addWidget(self.grid_form)
         self.main_layout.addWidget(self.grid_widget)
         self.setLayout(self.main_layout)
-
-
-    def update_grid(self) -> None:
-        """ Refreshes grid. """
 
 
     def create_grid(self, rows: int, cols: int) -> None:
