@@ -45,7 +45,6 @@ class Grid:
     def __init__(self):
         self.matrix = []
         self.direction = 4 #set to 8 to allow for diagnoal movement
-        #used by algorithms to perform a step
         self.start_node = None
         self.current_node = None
         self.end_node = None
@@ -134,16 +133,22 @@ class Grid:
                 self.start_node.clear()
                 self.start_node.is_start = True
                 self.open_set = [self.start_node]
-                print("open_set set to: ", self.open_set)
+
 
     def set_visited_node(self, visited_node: Node) -> None:
         if visited_node in self.matrix:
             visited_node.clear()
-            self.is_visited()
+            visited_node.is_visited = True
+
+
+    def set_path_node(self, path_node: Node) -> None:
+        if path_node in self.matrix:
+            path_node.clear()
+            path_node.is_path = True
 
 
     def astar_step(self) -> None:
-        """ Take a step using the astar algorithm. """
+        """ Take a step using the astar algorithm. Last step is appended to open_set. """
         #self.open_set.append(start_node)
         self.current_node = min(self.open_set, key=lambda node: node.G + node.H)
         self.current_node.is_visited = True
@@ -158,6 +163,8 @@ class Grid:
             #remove duplicate start_node and append final node
             self.final_path.pop(0)
             self.final_path.append(self.end_node)
+            for node in self.final_path:
+                node.is_path = True
             self.is_solved = True
             return
 

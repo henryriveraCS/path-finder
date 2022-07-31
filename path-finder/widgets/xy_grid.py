@@ -1,5 +1,6 @@
 import sys
 import time
+from typing import Optional
 
 from PyQt5.QtWidgets import (
         QApplication, QMainWindow, QWidget,
@@ -76,23 +77,22 @@ class NodeWidget(QWidget, logic.Node):
         qp = QPainter()
         qp.begin(self)
         qp.setRenderHints(qp.Antialiasing)
+        brush = QBrush(self.background_color)
+        qp.setBrush(brush)
         if self.is_wall:
             brush = QBrush(self.wall_color)
             qp.setBrush(brush)
-        elif self.is_start:
+        if self.is_visited:
+            brush = QBrush(self.visited_color)
+            qp.setBrush(brush)
+        if self.is_path:
+            brush = QBrush(self.path_color)
+            qp.setBrush(brush)
+        if self.is_start:
             brush = QBrush(self.start_color)
             qp.setBrush(brush)
-        elif self.is_end:
+        if self.is_end:
             brush = QBrush(self.end_color)
-            qp.setBrush(brush)
-        elif self.is_visited:
-            brush = QBrush(self.visited_color)
-            qp.setBrush(brush)
-        elif self.is_path:
-            brush = QBrush(self.visited_color)
-            qp.setBrush(brush)
-        else:
-            brush = QBrush(self.background_color)
             qp.setBrush(brush)
         qp.drawRect(0, 0, self.width(), self.height())
         qp.end()
@@ -100,10 +100,8 @@ class NodeWidget(QWidget, logic.Node):
 
     def mousePressEvent(self, event: QEvent) -> None:
         if event.button() == Qt.LeftButton:
-            print("Start node pressed: ", self.point)
             self.parent.set_start_node(self)
         elif event.button() == Qt.RightButton:
-            print("End node press:  ", self.point)
             self.parent.set_end_node(self)
         self.parent.refresh_nodes()
 
@@ -292,14 +290,15 @@ class GridWidget(QWidget, logic.Grid):
 
     def load_nodes(self) -> None:
         """ Iteratively loads nodes set in self.matrix. """
-        for node in self.matrix:
+        node_list = []
+        for idx, node in enumerate(self.matrix):
             col, row = node.get_x(), node.get_y()
             node_widget = NodeWidget(parent=self)
             node_widget.set_point(row, col)
             node_widget.update_point_label()
+            node_list.append(node_widget)
             self.grid_layout.addWidget(node_widget, col, row)
-
-        #load a list of all widgets in the grid for future use (refreshing all nodes)
+        self.matrix = node_list
 
 
     def get_node_size(self) -> tuple[int, int]:
@@ -322,34 +321,40 @@ class XYWindow(QWidget):
         self.main_layout.addWidget(self.grid_widget)
         self.setLayout(self.main_layout)
 
-        self.grid_widget.set_x(val=5)
-        self.grid_widget.set_y(val=5)
-        self.grid_widget.load_matrix()
-        self.grid_widget.load_nodes()
+        # track rows/cols
+        self.rows = 5
+        self.cols = 5
+        self.grid_widget.set_x(val=self.cols)
+        self.grid_widget.set_y(val=self.rows)
+        self.load_grid()
+
 
 
     def on_valid_menu(self, params: dict) -> None:
-        """ Runs defined search. """
-        #begin loading the grid with the validated parameters
-        rows = params.get("rows")
-        cols = params.get("cols")
+        """ Runs the selected algorithm with selected options. """
+        self.rows = params.get("rows")
+        self.cols = params.get("cols")
         algo = params.get("algorithm")
-        timer = params.get("timer")
+        self.timer = params.get("timer")
+        print("timer: ", self.timer)
+        print("cols: ", self.cols)
+        print("rows: ", self.rows)
+        print("Algo: ", algo)
 
         solved = self.grid_widget.is_solved
-        #astar algorithm
-        if algo == 1:
-            print("Astar Algorithm running")
-            while solved is not True:
+        while solved is not True:
+            # astar algorithm
+            if algo == 1:
                 self.grid_widget.astar_step()
                 solved = self.grid_widget.is_solved
-                self.grid_widget.refresh_nodes()
-            #algorithm solved
-            print("Final Path:")
-            for node in self.grid_widget.final_path:
-                print(node.point)
-        #self.refresh_grid(rows=rows, cols=cols)
+            # djikstra algorithm
+            elif algo == 2:
+                pass
+            self.grid_widget.refresh_nodes()
 
+        for node in self.grid_widget.final_path:
+            print(node.point, node.is_visited, node.is_start, node.is_end, node.is_wall)
+        #self.grid_widget.refresh_nodes()
 
     def update_layout(self) -> None:
         """ Reloads entire layout. """
@@ -359,6 +364,10 @@ class XYWindow(QWidget):
         self.main_layout.addWidget(self.grid_form)
         self.main_layout.addWidget(self.grid_widget)
         self.setLayout(self.main_layout)
+
+
+    def update_grid(self) -> None:
+        """ Refreshes grid. """
 
 
     def create_grid(self, rows: int, cols: int) -> None:
