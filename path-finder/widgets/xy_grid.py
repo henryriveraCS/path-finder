@@ -10,7 +10,11 @@ from PyQt5.QtWidgets import (
         QFrame
         )
 
-from PyQt5.QtCore import QSize, Qt, pyqtSlot, pyqtSignal, QEvent, QRectF
+from PyQt5.QtCore import (
+    QSize, Qt, pyqtSlot,
+    pyqtSignal, QEvent, QRectF,
+    QThread, QObject
+    )
 from PyQt5.QtGui import QIcon, QPixmap, QPainter, QBrush, QFont
 
 from tools import Colors
@@ -306,7 +310,47 @@ class GridWidget(QWidget, logic.Grid):
         node_height = self.height//self.cols
         node_width = self.width//self.rows
         return node_height, node_width
-    
+
+
+class Worker(QThread):
+    """ Worker object to run while loop to prevent GUI from freezing. """
+    #progress = pyqtSignal(int)
+    gui_update = pyqtSignal()
+    #finish = pyqtSignal(bool)
+    ex = pyqtSignal()
+
+    def __init__(self, grid_widget, *kwargs):
+        super().__init__()
+        self.grid_widget = grid_widget
+
+
+    def run(self):
+        solved = self.grid_widget.grid_widget.is_solved
+        while solved is not True:
+            # astar algorithm
+            if self.grid_widget.algo == 1:
+                self.grid_widget.grid_widget.astar_step()
+                solved = self.grid_widget.grid_widget.is_solved
+            # djikstra algorithm
+            elif self.grid_widget.algo == 2:
+                pass
+            print("sleep")
+            if self.grid_widget.timer is not None:
+                self.grid_widget.refresh_grid()
+                #self.grid_widget.repaint()
+                #self.grid_widget.update()
+
+                #self.progress.emit()
+                self.gui_update.emit()
+                time.sleep(self.grid_widget.timer)
+            self.grid_widget.grid_widget.refresh_nodes()
+
+        for node in self.grid_widget.grid_widget.final_path:
+            print(node.point, node.is_visited, node.is_start, node.is_end, node.is_wall)
+
+        #self.finish.emit(True)
+        self.ex.emit()
+
 
 class XYWindow(QWidget):
     def __init__(self, parent):
@@ -334,27 +378,25 @@ class XYWindow(QWidget):
         """ Runs the selected algorithm with selected options. """
         self.rows = params.get("rows")
         self.cols = params.get("cols")
-        algo = params.get("algorithm")
+        self.algo = params.get("algorithm")
         self.timer = params.get("timer")
-        print("timer: ", self.timer)
-        print("cols: ", self.cols)
-        print("rows: ", self.rows)
-        print("Algo: ", algo)
+        # making thread to prevent freezing UI while looping
+        self.thread = Worker(self, self.grid_widget)
+        #self.parent.processEvents()
+        self.parent.app.processEvents()
+        self.thread.start()
+        """
+        self.q_thread = QThread()
+        self.worker = Worker(self)
+        self.worker.moveToThread(self.q_thread)
+        self.q_thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.q_thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.q_thread.finished.connect(self.q_thread.deleteLater)
+        #self.worker.progress.connect(self.reportProgress)
+        self.q_thread.start()
+        """
 
-        solved = self.grid_widget.is_solved
-        while solved is not True:
-            # astar algorithm
-            if algo == 1:
-                self.grid_widget.astar_step()
-                solved = self.grid_widget.is_solved
-            # djikstra algorithm
-            elif algo == 2:
-                pass
-            self.grid_widget.refresh_nodes()
-
-        for node in self.grid_widget.final_path:
-            print(node.point, node.is_visited, node.is_start, node.is_end, node.is_wall)
-        #self.grid_widget.refresh_nodes()
 
     def update_layout(self) -> None:
         """ Reloads entire layout. """
@@ -382,8 +424,11 @@ class XYWindow(QWidget):
         self.grid_widget.load_matrix()
         self.grid_widget.load_nodes()
 
+    
+    def refresh_grid(self) -> None:
+        self.grid_widget.refresh_nodes()
 
-    def refresh_grid(self, rows: int, cols: int) -> None:
+    def reload_grid(self, rows: int, cols: int) -> None:
         """ Deletes old grid and places new one with updated matrix. """
         self.main_layout.removeWidget(self.grid_widget)
         self.create_grid(rows=rows, cols=cols)

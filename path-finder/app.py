@@ -63,9 +63,10 @@ class MainWindowMenu(QWidget):
 
         
 class MainWindow(QMainWindow):
-    def __init__(self, osi):
+    def __init__(self, osi, app):
         super().__init__()
         self.osi = osi
+        self.app = app
         self.mode = [None]
         #set window icons/logos
         self.setWindowTitle(self.osi.GetTitle())
@@ -104,6 +105,6 @@ if __name__ == "__main__":
     app.setWindowIcon(QIcon(osi.GetWindowsIcon()))
     #loading up instances of empty widgets to initialize when user select a mode
     modes = Modes().modes
-    window = MainWindow(osi)
+    window = MainWindow(osi, app)
     window.show()
     sys.exit(app.exec())
