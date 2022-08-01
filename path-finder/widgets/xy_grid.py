@@ -3,19 +3,14 @@ import time
 from typing import Optional
 
 from PyQt5.QtWidgets import (
-        QApplication, QMainWindow, QWidget,
-        QGridLayout, QFormLayout, QLineEdit,
-        QVBoxLayout, QHBoxLayout, QPushButton,
-        QLabel, QComboBox, QMessageBox, QGridLayout,
-        QFrame
+        QWidget, QGridLayout, QFormLayout,
+        QLineEdit, QVBoxLayout, QHBoxLayout,
+        QPushButton, QLabel, QComboBox,
+        QMessageBox
         )
 
-from PyQt5.QtCore import (
-    QSize, Qt, pyqtSlot,
-    pyqtSignal, QEvent, QRectF,
-    QThread, QObject
-    )
-from PyQt5.QtGui import QIcon, QPixmap, QPainter, QBrush, QFont
+from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QEvent, QThread
+from PyQt5.QtGui import QPainter, QBrush, QFont
 
 from tools import Colors
 from algorithms import logic
