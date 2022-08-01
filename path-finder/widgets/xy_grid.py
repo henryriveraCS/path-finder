@@ -187,12 +187,7 @@ class GridForm(QWidget):
         self.setLayout(self.form_layout)
 
 
-    def show_msg_box(self, title: str, msg: str) -> None:
-        msg_box = QMessageBox()
-        msg_box.setWindowTitle(title)
-        msg_box.setText(msg)
-        msg_box.exec_()
-
+   
 
     def on_col_changed(self) -> None:
         title="Invalid Column"
@@ -203,7 +198,7 @@ class GridForm(QWidget):
         else:
             self.cols = 5
             self.col_line.setText(str(self.cols))
-            self.show_msg_box(title=title, msg=msg)
+            self.parent.show_msg_box(title=title, msg=msg)
 
 
     def on_row_changed(self) -> None:
@@ -215,13 +210,13 @@ class GridForm(QWidget):
         else:
             self.rows = 5
             self.row_line.setText(str(self.rows))
-            self.show_msg_box(title=title, msg=msg)
+            self.parent.show_msg_box(title=title, msg=msg)
 
 
     @pyqtSlot()
     def on_reload_grid(self) -> None:
         """ Reloads entire grid with selected row/columns """
-        self.parent.reload_grid()
+        self.parent.reload_grid(rows=self.rows, cols=self.cols)
 
 
     @pyqtSlot(int)
@@ -295,7 +290,7 @@ class GridForm(QWidget):
                 msg += f"- {item}\n"
 
             title = "Missing Fields"
-            self.show_msg_box(title=title, msg=msg)
+            self.parent.show_msg_box(title=title, msg=msg)
 
 
 class GridWidget(QWidget, logic.Grid):
@@ -404,6 +399,13 @@ class XYWindow(QWidget):
         self.load_grid()
 
 
+    def show_msg_box(self, title: str, msg: str) -> None:
+        msg_box = QMessageBox()
+        msg_box.setWindowTitle(title)
+        msg_box.setText(msg)
+        msg_box.exec_()
+
+
     def on_valid_menu(self, params: dict) -> None:
         """ Runs the selected algorithm with selected options. """
         self.rows = params.get("rows")
@@ -411,6 +413,12 @@ class XYWindow(QWidget):
         self.algo = params.get("algorithm")
         self.timer = params.get("timer")
         # making thread to prevent freezing UI while looping
+        if self.grid_widget.start_node is None or self.grid_widget.end_node is None:
+            self.show_msg_box(
+                title="Missing Start/End Nodes",
+                msg="Start/End Node not set."
+            )
+            return None
         self.thread = Worker(self, self.grid_widget)
         self.parent.app.processEvents()
         self.thread.start()
