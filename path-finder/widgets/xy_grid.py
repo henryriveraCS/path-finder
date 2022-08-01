@@ -24,10 +24,10 @@ algorithm_box_data = [
 
 time_box_data = [
     {"index": 0, "name": "Instant", "active": False, "timer": 0},
-    {"index": 1, "name": "1 step per second", "active": True, "timer": 1},
-    {"index": 2, "name": "2 step per second", "active": True, "timer": 2},
-    {"index": 3, "name": "3 step per second", "active": True, "timer": 3},
-    {"index": 4, "name": "4 step per second", "active": True, "timer": 4}
+    {"index": 1, "name": "1 step every 0.5 seconds", "active": True, "timer": 0.5},
+    {"index": 2, "name": "1 step every 1.0 seconds", "active": True, "timer": 1.0},
+    {"index": 3, "name": "1 step every 1.5 seconds", "active": True, "timer": 1.5},
+    {"index": 4, "name": "1 step every 2.0 seconds", "active": True, "timer": 2.0}
 ]
 
 direction_box_data = [
@@ -145,12 +145,17 @@ class GridForm(QWidget):
         self.row_label.setAlignment(Qt.AlignCenter)
         self.row_line = QLineEdit()
         self.row_line.setText(str(self.cols))
+        self.row_line.editingFinished.connect(self.on_row_changed)
 
         self.col_label = QLabel()
         self.col_label.setText("Columns:")
         self.col_label.setAlignment(Qt.AlignCenter)
         self.col_line = QLineEdit()
         self.col_line.setText(str(self.rows))
+        self.col_line.editingFinished.connect(self.on_col_changed)
+
+        self.reload_button = QPushButton("Reload Grid")
+        self.reload_button.clicked.connect(self.on_reload_grid)
 
         self.direction_label = QLabel()
         self.direction_label.setText("Direction:")
@@ -176,17 +181,58 @@ class GridForm(QWidget):
         self.form_layout.addRow(self.row_line)
         self.form_layout.addRow(self.col_label)
         self.form_layout.addRow(self.col_line)
+        self.form_layout.addRow(self.reload_button)
         self.form_layout.addRow(self.search_button)
 
         self.setLayout(self.form_layout)
 
+
+    def show_msg_box(self, title: str, msg: str) -> None:
+        msg_box = QMessageBox()
+        msg_box.setWindowTitle(title)
+        msg_box.setText(msg)
+        msg_box.exec_()
+
+
+    def on_col_changed(self) -> None:
+        title="Invalid Column"
+        msg = "Column is not an integer"
+        col_is_int = self.col_line.text().isdigit()
+        if col_is_int:
+            self.cols = int(self.col_line.text())
+        else:
+            self.cols = 5
+            self.col_line.setText(str(self.cols))
+            self.show_msg_box(title=title, msg=msg)
+
+
+    def on_row_changed(self) -> None:
+        title="Invalid Row"
+        msg = "Row is not an integer"
+        row_is_int = self.row_line.text().isdigit()
+        if row_is_int:
+            self.rows = int(self.row_line.text())
+        else:
+            self.rows = 5
+            self.row_line.setText(str(self.rows))
+            self.show_msg_box(title=title, msg=msg)
+
+
+    @pyqtSlot()
+    def on_reload_grid(self) -> None:
+        """ Reloads entire grid with selected row/columns """
+        self.parent.reload_grid()
+
+
     @pyqtSlot(int)
     def on_algo_valueChanged(self, selected_algorithm: int) -> None:
+        """ Updates selected algorithm """
         self.selected_algorithm = selected_algorithm
 
 
     @pyqtSlot(int)
     def on_direction_valueChanged(self, selected_direction: int) -> None:
+        """ Sets direction that algorithm will use """
         for direction in direction_box_data:
             if selected_direction == direction.get("index"):
                 self.selected_direction = direction.get("direction")
@@ -194,6 +240,7 @@ class GridForm(QWidget):
 
     @pyqtSlot(int)
     def on_time_valueChanged(self, selected_time: int) -> None:
+        """ Sets sleep timer for algorithm steps """
         for time in time_box_data:
             if selected_time == time.get("index"):
                 self.selected_time = time.get("timer")
@@ -246,10 +293,9 @@ class GridForm(QWidget):
             msg = "Make sure the following values are set correctly:\n\n"
             for item in missing_items:
                 msg += f"- {item}\n"
-            msg_box = QMessageBox()
-            msg_box.setWindowTitle("Missing Fields")
-            msg_box.setText(msg)
-            msg_box.exec_()
+
+            title = "Missing Fields"
+            self.show_msg_box(title=title, msg=msg)
 
 
 class GridWidget(QWidget, logic.Grid):
@@ -325,12 +371,16 @@ class Worker(QThread):
             # djikstra algorithm
             elif self.grid_widget.algo == 2:
                 pass
+
             if self.grid_widget.timer is not None:
-                self.grid_widget.refresh_grid()
-                self.gui_update.emit()
                 time.sleep(self.grid_widget.timer)
 
+            self.gui_update.emit()
+            self.grid_widget.refresh_grid()
+
         self.grid_widget.update()
+        self.grid_widget.refresh_grid()
+        self.gui_update.emit()
 
 
 class XYWindow(QWidget):
