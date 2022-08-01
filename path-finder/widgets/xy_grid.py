@@ -452,6 +452,7 @@ class XYWindow(QWidget):
     def reload_grid(self, rows: int, cols: int) -> None:
         """ Deletes old grid and places new one with updated matrix. """
         self.main_layout.removeWidget(self.grid_widget)
+        self.grid_widget.deleteLater()
         self.create_grid(rows=rows, cols=cols)
         self.load_grid()
         self.main_layout.addWidget(self.grid_widget)
