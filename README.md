@@ -27,6 +27,7 @@ Pathfinding algorithms visualized in python3 with a 2D/~~3D(soon)~~ GUI interfac
 git clone https://github.com/henryriveraCS/path-finder
 cd path-finder/
 python3 -m venv ./
+source bin/activate (or bin/activate.ps1 if using windows)
 pip3 install -r requirements.txt
 python3 path-finder/app.py
 ```
