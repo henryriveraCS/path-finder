@@ -104,6 +104,13 @@ class Grid:
         self.y_range = range(val+1)
         self.cols = len(self.y_range)
 
+    def set_direction(self, direction: int) -> None:
+        if direction == 4:
+            self.direction = 4
+        elif direction == 8:
+            self.direction = 8
+        else:
+            self.direction = 4
 
     def set_wall_node(self, wall_node: Node) -> None:
         for node in self.matrix:
