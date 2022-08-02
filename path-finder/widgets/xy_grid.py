@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (
         QMessageBox
         )
 
-from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QEvent, QThread
+from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QEvent, QThread, QObject
 from PyQt5.QtGui import QPainter, QBrush, QFont
 
 from tools import Colors
@@ -348,15 +348,18 @@ class GridWidget(QWidget, logic.Grid):
         return node_height, node_width
 
 
-class Worker(QThread):
+class Worker(QObject):
     """ Worker object to run while loop to prevent GUI from freezing. """
     gui_update = pyqtSignal()
-    def __init__(self, grid_widget, *kwargs):
+
+    def __init__(self, grid_widget: GridWidget) -> None:
         super().__init__()
+        self.gui_update = pyqtSignal()
         self.grid_widget = grid_widget
 
 
-    def run(self):
+    @pyqtSlot()
+    def run(self) -> None:
         solved = self.grid_widget.grid_widget.is_solved
         while solved is not True:
             # astar algorithm
@@ -370,12 +373,15 @@ class Worker(QThread):
             if self.grid_widget.timer is not None:
                 time.sleep(self.grid_widget.timer)
 
-            self.gui_update.emit()
+            #self.gui_update.emit()
+            #gui_update.emit()
             self.grid_widget.refresh_grid()
+            self.grid_widget.parent.app.processEvents()
 
         self.grid_widget.update()
         self.grid_widget.refresh_grid()
-        self.gui_update.emit()
+        #gui_update.emit()
+        #thread.start()
 
 
 class XYWindow(QWidget):
@@ -383,6 +389,8 @@ class XYWindow(QWidget):
         super().__init__(parent)
         #pyQT metadata
         self.parent = parent
+        self.algorithm_done = pyqtSignal()
+        self.__threads = []
         self.main_layout = QHBoxLayout()
         self.grid_form = GridForm(self)
         self.grid_widget = GridWidget(parent=self)
@@ -410,6 +418,7 @@ class XYWindow(QWidget):
         """ Runs the selected algorithm with selected options. """
         self.rows = params.get("rows")
         self.cols = params.get("cols")
+        self.direction = params.get("direction")
         self.algo = params.get("algorithm")
         self.timer = params.get("timer")
         # making thread to prevent freezing UI while looping
@@ -419,9 +428,14 @@ class XYWindow(QWidget):
                 msg="Start/End Node not set."
             )
             return None
-        self.thread = Worker(self, self.grid_widget)
-        self.parent.app.processEvents()
-        self.thread.start()
+        self.grid_widget.set_direction(self.direction)
+        worker = Worker(self)
+        thread = QThread()
+        #save thread instance to object otherwise GC will remove it instantly
+        self.__threads.append(thread)
+        worker.moveToThread(thread)
+        thread.start()
+        worker.run()
 
     def update_layout(self) -> None:
         """ Reloads entire layout. """
