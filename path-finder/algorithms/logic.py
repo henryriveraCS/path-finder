@@ -1,4 +1,5 @@
 import math
+from operator import attrgetter
 
 class Node:
     """ Base logic for Node """
@@ -51,6 +52,8 @@ class Grid:
         self.open_set = []
         self.closed_set = []
         self.final_path = []
+        self.u_set = []
+        self.v_set = []
         self.is_solved = False
 
 
@@ -104,6 +107,7 @@ class Grid:
         self.y_range = range(val+1)
         self.cols = len(self.y_range)
 
+
     def set_direction(self, direction: int) -> None:
         if direction == 4:
             self.direction = 4
@@ -111,6 +115,7 @@ class Grid:
             self.direction = 8
         else:
             self.direction = 4
+
 
     def set_wall_node(self, wall_node: Node) -> None:
         for node in self.matrix:
@@ -132,6 +137,7 @@ class Grid:
 
     def set_start_node(self, start_node: Node) -> None:
         if self.start_node is not None:
+            self.start_node.distance = float(math.inf) # reset start_node distance
             self.start_node.clear()
         for node in self.matrix:
             if node.point == start_node.point:
@@ -139,7 +145,9 @@ class Grid:
                 self.start_node = start_node
                 self.start_node.clear()
                 self.start_node.is_start = True
+                self.start_node.distance = 0 # djikstra algorithm uses this
                 self.open_set = [self.start_node]
+                self.current_node = self.start_node #djikstra algorihtm uses this
 
 
     def set_visited_node(self, visited_node: Node) -> None:
@@ -155,8 +163,7 @@ class Grid:
 
 
     def astar_step(self) -> None:
-        """ Take a step using the astar algorithm. Last step is appended to open_set. """
-        #self.open_set.append(start_node)
+        """ Take a step using the astar algorithm. """
         self.current_node = min(self.open_set, key=lambda node: node.G + node.H)
         self.current_node.is_visited = True
         if self.current_node.point == self.end_node.point:
@@ -193,3 +200,40 @@ class Grid:
                 node.H = self.manhattan_distance(node, self.end_node)
                 node.node_parent = self.current_node
                 self.open_set.append(node)
+
+    def djikstra_setup(self) -> None:
+        """
+            Djikstra requires a few variables setup after widgets are loaded.
+            This function should be used before the first djikstra_step() call.
+        """
+        self.u_set = self.matrix
+        self.current_node = self.start_node
+
+    def djikstra_step(self) -> None:
+        """ Take a step using the djikstra algorithm. """
+        print("current_node: ", self.current_node.point, self.current_node, type(self.current_node))
+        print("u_set: ", self.u_set, type(self.u_set))
+        self.u_set.remove(self.current_node)
+        while self.current_node.point != self.end_node.point:
+            for node in self.neighbors(self.current_node):
+                node.is_visited = True
+                tentative_cost = self.current_node.distance + node.move_cost()
+                if node in self.v_set or node.is_wall is True:
+                    continue
+                else:
+                    if tentative_cost < node.distance:
+                        node.node_parent = self.current_node
+                        for i in self.u_set:
+                            if i.point == node.point:
+                                i = node
+            self.v_set.append(self.current_node)
+            self.lowest_cost_node = min(self.u_set, key=attrgetter("distance"))
+            self.current_node = self.lowest_cost_node
+            self.u_set.remove(self.current_node)
+
+        #algorithm has finished
+        while self.current_node.node_parent:
+            self.current_node.is_path = True
+            self.current_node = self.current_node.node_parent
+
+        self.is_solved = True

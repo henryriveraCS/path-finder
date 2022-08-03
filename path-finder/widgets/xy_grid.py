@@ -187,8 +187,6 @@ class GridForm(QWidget):
         self.setLayout(self.form_layout)
 
 
-   
-
     def on_col_changed(self) -> None:
         title="Invalid Column"
         msg = "Column is not an integer"
@@ -329,7 +327,7 @@ class GridWidget(QWidget, logic.Grid):
             node_widget.widget().update()
 
     def load_nodes(self) -> None:
-        """ Iteratively loads nodes set in self.matrix. """
+        """ Iteratively loads NodeWidgets() set into self.matrix. """
         node_list = []
         for idx, node in enumerate(self.matrix):
             col, row = node.get_x(), node.get_y()
@@ -346,43 +344,6 @@ class GridWidget(QWidget, logic.Grid):
         node_height = self.height//self.cols
         node_width = self.width//self.rows
         return node_height, node_width
-
-
-class Worker(QObject):
-    """ Worker object to run while loop to prevent GUI from freezing. """
-    gui_update = pyqtSignal()
-
-    def __init__(self, grid_widget: GridWidget) -> None:
-        super().__init__()
-        self.gui_update = pyqtSignal()
-        self.grid_widget = grid_widget
-
-
-    @pyqtSlot()
-    def run(self) -> None:
-        solved = self.grid_widget.grid_widget.is_solved
-        while solved is not True:
-            # astar algorithm
-            if self.grid_widget.algo == 1:
-                self.grid_widget.grid_widget.astar_step()
-                solved = self.grid_widget.grid_widget.is_solved
-            # djikstra algorithm
-            elif self.grid_widget.algo == 2:
-                pass
-
-            if self.grid_widget.timer is not None:
-                time.sleep(self.grid_widget.timer)
-
-            #self.gui_update.emit()
-            #gui_update.emit()
-            self.grid_widget.refresh_grid()
-            self.grid_widget.parent.app.processEvents()
-
-        self.grid_widget.update()
-        self.grid_widget.refresh_grid()
-        #gui_update.emit()
-        #thread.start()
-
 
 class XYWindow(QWidget):
     def __init__(self, parent):
@@ -471,3 +432,35 @@ class XYWindow(QWidget):
         self.load_grid()
         self.main_layout.addWidget(self.grid_widget)
         self.update()
+
+class Worker(QObject):
+    """ Worker object to run while loop to prevent GUI from freezing. """
+    def __init__(self, xy_widget: XYWindow) -> None:
+        super().__init__()
+        self.gui_update = pyqtSignal()
+        self.xy_widget = xy_widget
+        self.djikstra_setup_flag = False
+
+    @pyqtSlot()
+    def run(self) -> None:
+        solved = self.xy_widget.grid_widget.is_solved
+        while solved is not True:
+            # astar algorithm
+            if self.xy_widget.algo == 1:
+                self.xy_widget.grid_widget.astar_step()
+            # djikstra algorithm
+            elif self.xy_widget.algo == 2:
+                if self.djikstra_setup_flag is False:
+                    self.grid_widget.grid_widget.djikstra_setup()
+                    self.djikstra_setup_flag = True
+                self.xy_widget.grid_widget.djikstra_step()
+
+            solved = self.xy_widget.grid_widget.is_solved
+            if self.xy_widget.timer is not None:
+                time.sleep(self.xy_widget.timer)
+
+            self.xy_widget.refresh_grid()
+            self.xy_widget.parent.app.processEvents()
+
+        self.xy_widget.update()
+        self.xy_widget.refresh_grid()
