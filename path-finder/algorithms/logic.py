@@ -218,23 +218,22 @@ class Grid:
     def djikstra_step(self) -> None:
         """ Take a step using the djikstra algorithm. """
         self.u_set.remove(self.current_node)
-        while self.current_node.point != self.end_node.point:
-            for node in self.neighbors(self.current_node):
-                node.is_visited = True
-                tentative_cost = self.current_node.distance + node.move_cost()
-                if node in self.v_set or node.is_wall is True:
-                    continue
-                else:
-                    if tentative_cost < node.distance:
-                        node.distance = tentative_cost
-                        node.node_parent = self.current_node
-            self.v_set.append(self.current_node)
-            self.lowest_cost_node = min(self.u_set, key=attrgetter("distance"))
-            #self.lowest_cost_node.node_parent = self.current_node
-            self.current_node = self.lowest_cost_node
-            self.u_set.remove(self.current_node)
+        for node in self.neighbors(self.current_node):
+            node.is_visited = True
+            tentative_cost = self.current_node.distance + node.move_cost()
+            if node in self.v_set or node.is_wall is True:
+                continue
+            else:
+                if tentative_cost < node.distance:
+                    node.distance = tentative_cost
+                    node.node_parent = self.current_node
+        self.v_set.append(self.current_node)
+        self.lowest_cost_node = min(self.u_set, key=attrgetter("distance"))
+        self.current_node = self.lowest_cost_node
 
-        while self.current_node.node_parent:
-            self.current_node.is_path = True
-            self.current_node = self.current_node.node_parent
-        self.is_solved = True
+
+        if self.current_node.point == self.end_node.point:
+            while self.current_node.node_parent:
+                self.current_node.is_path = True
+                self.current_node = self.current_node.node_parent
+            self.is_solved = True
