@@ -31,6 +31,10 @@ class Node:
 
     def move_cost(self) -> int:
         return self.cost
+    
+
+    def reset_distance(self) -> None:
+        self.distance = float(math.inf)
 
 
     def clear(self) -> None:
@@ -127,6 +131,7 @@ class Grid:
     def set_end_node(self, end_node: Node) -> None: 
         if self.end_node is not None:
             self.end_node.clear()
+            self.end_node.reset_distance()
         for node in self.matrix:
             if node.point == end_node.point:
                 node.clear()
@@ -137,28 +142,28 @@ class Grid:
 
     def set_start_node(self, start_node: Node) -> None:
         if self.start_node is not None:
-            self.start_node.distance = float(math.inf) # reset start_node distance
             self.start_node.clear()
+            self.start_node.reset_distance()
         for node in self.matrix:
             if node.point == start_node.point:
                 node.clear()
                 self.start_node = start_node
                 self.start_node.clear()
                 self.start_node.is_start = True
-                self.start_node.distance = 0 # djikstra algorithm uses this
                 self.open_set = [self.start_node]
-                self.current_node = self.start_node #djikstra algorihtm uses this
 
 
     def set_visited_node(self, visited_node: Node) -> None:
         if visited_node in self.matrix:
             visited_node.clear()
+            visited_node.reset_distance()
             visited_node.is_visited = True
 
 
     def set_path_node(self, path_node: Node) -> None:
         if path_node in self.matrix:
             path_node.clear()
+            visited_node.reset_distance()
             path_node.is_path = True
 
 
@@ -208,11 +213,10 @@ class Grid:
         """
         self.u_set = self.matrix
         self.current_node = self.start_node
+        self.current_node.distance = 0
 
     def djikstra_step(self) -> None:
         """ Take a step using the djikstra algorithm. """
-        print("current_node: ", self.current_node.point, self.current_node, type(self.current_node))
-        print("u_set: ", self.u_set, type(self.u_set))
         self.u_set.remove(self.current_node)
         while self.current_node.point != self.end_node.point:
             for node in self.neighbors(self.current_node):
@@ -222,18 +226,15 @@ class Grid:
                     continue
                 else:
                     if tentative_cost < node.distance:
+                        node.distance = tentative_cost
                         node.node_parent = self.current_node
-                        for i in self.u_set:
-                            if i.point == node.point:
-                                i = node
             self.v_set.append(self.current_node)
             self.lowest_cost_node = min(self.u_set, key=attrgetter("distance"))
+            #self.lowest_cost_node.node_parent = self.current_node
             self.current_node = self.lowest_cost_node
             self.u_set.remove(self.current_node)
 
-        #algorithm has finished
         while self.current_node.node_parent:
             self.current_node.is_path = True
             self.current_node = self.current_node.node_parent
-
         self.is_solved = True
