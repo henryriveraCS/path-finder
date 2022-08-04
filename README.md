@@ -15,9 +15,9 @@ Pathfinding algorithms visualized in python3 with a 2D/~~3D(soon)~~ GUI interfac
 
 <h2>TO DO</h2>
 
-- Re-design PyQt5 widget classes to be more modular <-- currently here
-- Re-implement 2D Astar Algorithm
-- Re-implement 2D Djikstra Algorithm
+- ~~Re-design PyQt5 widget classes to be more modular~~
+- ~~Re-implement 2D Astar Algorithm~~
+- ~~Re-implement 2D Djikstra Algorithm~~
 - Implement 3D Astar Algorithm
 - Implement 3D Djikstra Algorithm
 
