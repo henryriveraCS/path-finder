@@ -451,7 +451,7 @@ class Worker(QObject):
             # djikstra algorithm
             elif self.xy_widget.algo == 2:
                 if self.djikstra_setup_flag is False:
-                    self.grid_widget.grid_widget.djikstra_setup()
+                    self.xy_widget.grid_widget.djikstra_setup()
                     self.djikstra_setup_flag = True
                 self.xy_widget.grid_widget.djikstra_step()
 
